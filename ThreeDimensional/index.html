@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>__VITE_TITLE__ - Three Dimensional</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div>
+      <div id="diffuse-light-checkbox-container" class="controller-container">
+        <input id="diffuse-light-checkbox" type="checkbox" checked />
+        <label for="diffuse-light-checkbox">Diffuse Light</label>
+      </div>
+      <div id="ambient-light-checkbox-container" class="controller-container">
+        <input id="ambient-light-checkbox" type="checkbox" checked />
+        <label for="ambient-light-checkbox">Ambient Light</label>
+      </div>
+      <div id="specular-light-checkbox-container" class="controller-container">
+        <input id="specular-light-checkbox" type="checkbox" checked />
+        <label for="specular-light-checkbox">Specular Light</label>
+      </div>
+    </div>
+    <canvas id="canvas"> HTML5 canvas is not supported. </canvas>
+    <script type="module" src="src/main.ts"></script>
+  </body>
+</html>
