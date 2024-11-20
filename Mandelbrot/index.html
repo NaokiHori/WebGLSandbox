@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>__VITE_TITLE__ - Mandelbrot set</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>Display Mandelbrot set.</h1>
+    <div id="controller-container">
+      <input id="ref-x-controller" type="range" min="-2" max="2" step="0.01" />
+      <input id="ref-y-controller" type="range" min="-2" max="2" step="0.01" />
+    </div>
+    <canvas id="canvas"> HTML5 canvas is not supported. </canvas>
+    <script type="module" src="src/main.ts"></script>
+  </body>
+</html>

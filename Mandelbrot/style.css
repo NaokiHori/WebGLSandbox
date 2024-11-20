@@ -1,0 +1,55 @@
+* {
+  color: #ffffff;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #000000;
+  display: flex;
+  flex-flow: column;
+}
+
+body > h1 {
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  overflow: hidden;
+}
+
+body > canvas {
+  min-height: 0;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
+  overflow: hidden;
+}
+
+body > div {
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  display: flex;
+  flex-flow: row;
+  flex-wrap: nowrap;
+  justify-content: space-evenly;
+  column-gap: 2vw;
+  padding: 1vh 2vw;
+  & > input {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    overflow: hidden;
+  }
+  & > input::-webkit-slider-runnable-track {
+    background-color: #888888;
+    border-radius: 1vh;
+  }
+}
