@@ -1,5 +1,7 @@
+import { WebGLContext } from "../../../shared/webgl/context";
+
 export function initResizeEvent(
-  gl: WebGLRenderingContext,
+  gl: WebGLContext,
   program: WebGLProgram,
 ): (canvas: HTMLCanvasElement) => void {
   // tasks to be done on window resize

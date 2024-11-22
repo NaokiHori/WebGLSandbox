@@ -1,8 +1,9 @@
+#version 300 es
+
 precision mediump float;
 
-attribute vec2 a_position;
+in vec2 a_position;
 uniform vec2 u_resolution;
-
 uniform float u_pointsize;
 
 void main (void) {

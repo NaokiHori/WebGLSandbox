@@ -1,6 +1,10 @@
+#version 300 es
+
 precision mediump float;
 
 uniform vec2 u_resolution;
+
+out vec4 frag_color;
 
 void main (void) {
   float asp = u_resolution.x / u_resolution.y;
@@ -12,9 +16,9 @@ void main (void) {
   vec2 sc = gl_FragCoord.xy / u_resolution;
   // discard fragments outside the radius
   if (radius < length(uv)) {
-    discard;
+      discard;
   }
   // set the fragment color
-  gl_FragColor = vec4(sc.x, sc.y, 1. - sc.x, 1.);
+  frag_color = vec4(sc.x, sc.y, 1. - sc.x, 1.);
 }
 

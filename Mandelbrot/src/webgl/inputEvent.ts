@@ -1,5 +1,7 @@
+import { WebGLContext } from "../../../shared/webgl/context";
+
 export function initInputEvent(
-  gl: WebGLRenderingContext,
+  gl: WebGLContext,
   program: WebGLProgram,
 ): (refPoint: [number, number]) => void {
   return (refPoint: [number, number]): void => {

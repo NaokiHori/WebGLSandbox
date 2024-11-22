@@ -1,6 +1,10 @@
+#version 300 es
+
 precision mediump float;
 
 uniform vec2 u_resolution;
+
+out vec4 frag_color;
 
 float PI = 3.141592653589793238;
 
@@ -25,6 +29,6 @@ void main (void) {
     float r = 0.5 * (1. + sin(arg + 2. * PI / 3. * 0.));
     float g = 0.5 * (1. + sin(arg + 2. * PI / 3. * 1.));
     float b = 0.5 * (1. + sin(arg + 2. * PI / 3. * 2.));
-    gl_FragColor = vec4(r, g, b, 1.);
+    frag_color = vec4(r, g, b, 1.);
   }
 }

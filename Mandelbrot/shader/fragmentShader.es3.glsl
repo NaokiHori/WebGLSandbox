@@ -1,7 +1,11 @@
+#version 300 es
+
 precision mediump float;
 
 uniform vec2 u_resolution;
 uniform vec2 u_ref;
+
+out vec4 frag_color;
 
 const float PI = 3.141592653589793;
 
@@ -68,6 +72,6 @@ void main (void) {
     color *= rate;
     color += RGBCOEFS[COLOR_ORDER - 2 - n];
   }
-  gl_FragColor = vec4(color, 1.);
+  frag_color = vec4(color, 1.);
 }
 

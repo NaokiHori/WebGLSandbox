@@ -32,6 +32,8 @@ jobs:
           npm install
       - name: Build web application
         run: |
+          npx tsc \
+          && \
           npx \
             vite build \
             --outDir=${{ env.ASSETS }} \
