@@ -1,6 +1,7 @@
-import { getCanvasElement, syncCanvasSize } from "../../shared/dom";
+import { getElementUnwrap, syncCanvasSize } from "../../shared/dom";
 import { WebGLObjects } from "./webgl";
-import { Angle, Counter, Timer } from "./util";
+import { Angle } from "./util";
+import { Timer } from "../../shared/util/timer";
 
 // arbitrary routine to give a point sprite
 function setPositions(
@@ -22,7 +23,7 @@ function setPositions(
 window.addEventListener("load", () => {
   // main canvas
   const canvasId = "canvas";
-  const canvas: HTMLCanvasElement = getCanvasElement(canvasId);
+  const canvas = getElementUnwrap(canvasId) as HTMLCanvasElement;
   // point sprite and buffer to store it
   const nitems = 32;
   const positions = new Float32Array(nitems * 2);
@@ -30,20 +31,14 @@ window.addEventListener("load", () => {
   const webGLObjects = new WebGLObjects(canvas, positions);
   // main draw
   const angle = new Angle(0.01);
-  const counter = new Counter();
-  const timer = new Timer(1000);
+  const timer = new Timer(1000, () => {
+    /* nothing to do for now */
+  });
   function draw() {
     setPositions(canvas, angle.get(), nitems, positions);
     webGLObjects.draw(nitems, positions);
     angle.update();
-    counter.update();
-    if (timer.elapsed()) {
-      console.log(
-        `${counter.get().toString()} animation loops per ${timer.increment.toString()} ms`,
-      );
-      counter.reset();
-      timer.start();
-    }
+    timer.update();
     requestAnimationFrame(draw);
   }
   window.addEventListener("resize", () => {
@@ -53,6 +48,6 @@ window.addEventListener("load", () => {
   });
   syncCanvasSize(canvas);
   webGLObjects.handleResizeEvent(canvas);
-  timer.start();
+  timer.update();
   draw();
 });

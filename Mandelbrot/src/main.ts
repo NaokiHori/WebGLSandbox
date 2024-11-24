@@ -1,4 +1,4 @@
-import { getCanvasElement, syncCanvasSize } from "../../shared/dom";
+import { getElementUnwrap, syncCanvasSize } from "../../shared/dom";
 import { WebGLObjects } from "./webgl";
 
 function getInputElement(id: string): HTMLInputElement {
@@ -12,7 +12,7 @@ function getInputElement(id: string): HTMLInputElement {
 window.addEventListener("load", () => {
   // main canvas
   const canvasId = "canvas";
-  const canvas: HTMLCanvasElement = getCanvasElement(canvasId);
+  const canvas = getElementUnwrap(canvasId) as HTMLCanvasElement;
   // input
   const refPoint: [number, number] = [0, 0];
   const controllers: [HTMLInputElement, HTMLInputElement] = [

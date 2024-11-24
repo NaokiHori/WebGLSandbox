@@ -14,6 +14,7 @@ export default defineConfig({
         helloWorld: resolve(root, "HelloWorld", "index.html"),
         fullScreen: resolve(root, "FullScreen", "index.html"),
         mandelbrot: resolve(root, "Mandelbrot", "index.html"),
+        threeDimensional: resolve(root, "ThreeDimensional", "index.html"),
         animate: resolve(root, "Animate", "index.html"),
       },
     },

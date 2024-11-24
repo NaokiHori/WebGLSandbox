@@ -1,8 +1,8 @@
-import { getCanvasElement } from "../../shared/dom";
+import { getElementUnwrap } from "../../shared/dom";
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 
 const canvasId = "canvas";
-const canvas: HTMLCanvasElement = getCanvasElement(canvasId);
+const canvas = getElementUnwrap(canvasId) as HTMLCanvasElement;
 const gl: WebGLContext = getContext(canvas);
 (function () {
   const r = 0.6627450980392157;

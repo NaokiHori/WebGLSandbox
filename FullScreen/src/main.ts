@@ -1,10 +1,10 @@
-import { getCanvasElement, syncCanvasSize } from "../../shared/dom";
+import { getElementUnwrap, syncCanvasSize } from "../../shared/dom";
 import { WebGLObjects } from "./webgl";
 
 window.addEventListener("load", () => {
   // main canvas
   const canvasId = "canvas";
-  const canvas: HTMLCanvasElement = getCanvasElement(canvasId);
+  const canvas = getElementUnwrap(canvasId) as HTMLCanvasElement;
   // set-up webgl-related stuffs
   const webGLObjects = new WebGLObjects(canvas);
   function draw() {
