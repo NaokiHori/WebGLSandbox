@@ -1,4 +1,5 @@
-import { Vector3, Matrix44 } from "./linearAlgebra";
+import { Vector3 } from "./linearAlgebra/vector3";
+import { Matrix44 } from "./linearAlgebra/matrix44";
 
 function computeMetricsOnCircle(
   nLongitude: number,

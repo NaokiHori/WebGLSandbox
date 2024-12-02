@@ -1,10 +1,10 @@
-name: Deploy-Pages
+name: CI
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy-doc:
+  build-and-deploy:
     name: Build artifacts and deploy them to GH Pages
     permissions:
       contents: read
@@ -24,16 +24,28 @@ jobs:
         uses: actions/checkout@main
       - name: Make directory to store all artifacts
         run: |
+          set -x
+          set -e
           mkdir ${{ env.ASSETS }}
       - name: Setup node
         uses: actions/setup-node@main
       - name: Install dependencies
         run: |
           npm install
+      - name: Run type-check
+        run: |
+          set -x
+          set -e
+          npx tsc
+      - name: Perform unit tests
+        run: |
+          set -x
+          set -e
+          npx vitest run
       - name: Build web application
         run: |
-          npx tsc \
-          && \
+          set -x
+          set -e
           npx \
             vite build \
             --outDir=${{ env.ASSETS }} \

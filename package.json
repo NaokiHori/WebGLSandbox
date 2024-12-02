@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "check": "tsc",
-    "build": "vite build",
+    "test": "vitest run",
+    "build": "vitest run && vite build",
     "dev": "vite",
     "prepare": "bash npm-scripts/prepare.sh"
   },
@@ -20,10 +21,9 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
     "prettier": "^3.3.3",
-    "vite": "^5.4.11"
-  },
-  "dependencies": {
+    "vite": "^5.4.11",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.15.0"
+    "typescript-eslint": "^8.15.0",
+    "vitest": "^2.1.8"
   }
 }

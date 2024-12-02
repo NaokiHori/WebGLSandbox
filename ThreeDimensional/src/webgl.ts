@@ -1,7 +1,8 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { initVBO, VBOConfig } from "../../shared/webgl/vbo";
-import { Matrix44, Vector3 } from "./linearAlgebra";
+import { Vector3 } from "./linearAlgebra/vector3";
+import { Matrix44 } from "./linearAlgebra/matrix44";
 import { initModel } from "./model";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
