@@ -16,6 +16,7 @@ export default defineConfig({
         texture: resolve(root, "Texture", "index.html"),
         juliaSet: resolve(root, "JuliaSet", "index.html"),
         scalar2D: resolve(root, "Scalar2D", "index.html"),
+        blend2DScalars: resolve(root, "Blend2DScalars", "index.html"),
         threeDimensional: resolve(root, "ThreeDimensional", "index.html"),
       },
     },
