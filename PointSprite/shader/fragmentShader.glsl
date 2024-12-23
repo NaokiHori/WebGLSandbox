@@ -12,7 +12,7 @@ float atan2(
     float x,
     float y
 ) {
-  return 0. == x ? 0. : atan(y, x);
+  return 0. == x ? 0.5 * sign(y) * PI : atan(y, x);
 }
 
 void main(void) {
