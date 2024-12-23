@@ -1,5 +1,5 @@
-import { Vector3 } from "./linearAlgebra/vector3";
-import { Matrix44 } from "./linearAlgebra/matrix44";
+import { Vector3 } from "../../shared/linearAlgebra/vector3";
+import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
 import { WebGLObjects } from "./webgl";
 
 function getCurrentPosition(event: PointerEvent): { x: number; y: number } {
