@@ -1,9 +1,10 @@
 import { getElementUnwrap, syncCanvasSize } from "../../shared/dom";
 import { WebGLObjects } from "./webgl";
 import { Timer } from "../../shared/util/timer";
+import { Counter } from "../../shared/util/counter";
 
 function setScalarField(
-  cntr: number,
+  counter: Counter,
   scalarLengths: [number, number],
   scalarGridPoints: [number, number],
   scalarField: Uint8Array,
@@ -14,10 +15,12 @@ function setScalarField(
   const yFreq = 2;
   for (let j = 0; j < scalarGridPoints[1]; j++) {
     const y = 0.5 * (2 * j + 1) * dy;
-    const yComp = 0.5 + 0.5 * Math.sin(2 * Math.PI * yFreq * y + 0.02 * cntr);
+    const yComp =
+      0.5 + 0.5 * Math.sin(2 * Math.PI * yFreq * y + 0.02 * counter.get());
     for (let i = 0; i < scalarGridPoints[0]; i++) {
       const x = 0.5 * (2 * i + 1) * dx;
-      const xComp = 0.5 + 0.5 * Math.sin(2 * Math.PI * xFreq * x + 0.06 * cntr);
+      const xComp =
+        0.5 + 0.5 * Math.sin(2 * Math.PI * xFreq * x + 0.06 * counter.get());
       scalarField[j * scalarGridPoints[0] + i] = Math.floor(
         255 * (xComp * yComp),
       );
@@ -51,17 +54,18 @@ window.addEventListener("load", (): void => {
   const timer = new Timer(1000, () => {
     /* nothing to do for now */
   });
-  let cntr = 0;
+  const counter = new Counter();
   function draw() {
-    setScalarField(cntr, scalarLengths, scalarGridPoints, scalarField);
+    setScalarField(counter, scalarLengths, scalarGridPoints, scalarField);
     webGLObjects.draw(scalarField);
     timer.update();
-    cntr += 1;
+    counter.update();
     requestAnimationFrame(draw);
   }
   // initial draw
   syncCanvasSize(canvas);
   webGLObjects.handleResizeEvent();
   timer.start();
+  counter.reset();
   draw();
 });

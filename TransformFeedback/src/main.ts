@@ -1,6 +1,7 @@
 import { getElementUnwrap, syncCanvasSize } from "../../shared/dom";
 import { WebGLObjects } from "./webgl";
 import { Timer } from "../../shared/util/timer";
+import { Counter } from "../../shared/util/counter";
 import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
 import { Vector3 } from "../../shared/linearAlgebra/vector3";
 
@@ -44,16 +45,16 @@ window.addEventListener("load", () => {
   const timer = new Timer(1000, () => {
     /* nothing to do for now */
   });
-  let cntr = 0;
+  const counter = new Counter();
   function draw() {
     const rotationMatrix = new Matrix44({
       type: "rotate",
-      angle: 0.01 * cntr,
+      angle: 0.01 * counter.get(),
       vector: new Vector3({ x: 1, y: 0, z: 0 }),
     });
     webGLObjects.draw(nitems, rotationMatrix);
     timer.update();
-    cntr += 1;
+    counter.update();
     requestAnimationFrame(draw);
   }
   window.addEventListener("resize", () => {
@@ -64,5 +65,6 @@ window.addEventListener("load", () => {
   syncCanvasSize(canvas);
   webGLObjects.handleResizeEvent();
   timer.start();
+  counter.reset();
   draw();
 });
