@@ -37,6 +37,7 @@ export class IndexBufferObject {
   private _buffer: WebGLBuffer;
   private _size: GLsizeiptr;
   private _usage: GLenum;
+  private _isBufferCopiedIntoDataStore: boolean;
 
   private target(gl: WebGLRenderingContext | WebGL2RenderingContext): GLenum {
     return gl.ELEMENT_ARRAY_BUFFER;
@@ -60,6 +61,7 @@ export class IndexBufferObject {
     this._buffer = buffer;
     this._size = size;
     this._usage = usage;
+    this._isBufferCopiedIntoDataStore = false;
   }
 
   public copyIntoDataStore({ srcData }: { srcData: Int16Array }) {
@@ -76,9 +78,15 @@ export class IndexBufferObject {
     gl.bindBuffer(target, buffer);
     gl.bufferData(target, srcData, usage);
     gl.bindBuffer(target, null);
+    this._isBufferCopiedIntoDataStore = true;
   }
 
   public draw({ otherTasks }: { otherTasks: () => void }) {
+    if (!this._isBufferCopiedIntoDataStore) {
+      console.error(
+        "IndexBufferObject error: trying to draw without the buffer being copied to GPU",
+      );
+    }
     const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
     const target: GLenum = this.target(gl);
     const buffer: WebGLBuffer = this._buffer;
