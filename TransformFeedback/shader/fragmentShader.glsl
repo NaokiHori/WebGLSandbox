@@ -12,7 +12,6 @@ void main(void) {
   float distance_from_center = length(2. * gl_PointCoord - 1.);
   // draw circle
   if (1. < distance_from_center) {
-    // external
     discard;
   } else {
     frag_color = vec4(pow(1. - distance_from_center, 0.5) * v_color, 1.);

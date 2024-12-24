@@ -18,18 +18,27 @@ export class WebGLObjects {
   private _aPosition1: WebGLBuffer;
   private _aPosition2: WebGLBuffer;
   private _transformFeedback: WebGLTransformFeedback;
-  private _drawCntr: number;
+  // specifies the direction of transform feedback
+  // true:  from aPosition1 to aPosition2
+  // false: from aPosition2 to aPosition1
+  private _isForward: boolean;
+  private _cameraPositionZ: number;
 
   public constructor(
     canvas: HTMLCanvasElement,
     positions: Float32Array,
     colors: Float32Array,
+    cameraPositionZ: number,
+    lorenzSigma: number,
+    lorenzRho: number,
   ) {
     const gl: WebGL2RenderingContext = getContext(
       canvas,
       { preserveDrawingBuffer: false },
       false,
     ) as WebGL2RenderingContext;
+    gl.disable(gl.CULL_FACE);
+    gl.disable(gl.DEPTH_TEST);
     const program: WebGLProgram = initProgram({
       gl,
       vertexShaderSource,
@@ -77,7 +86,11 @@ export class WebGLObjects {
     this._aPosition1 = aPosition1;
     this._aPosition2 = aPosition2;
     this._transformFeedback = transformFeedback;
-    this._drawCntr = 0;
+    this._isForward = true;
+    this._cameraPositionZ = cameraPositionZ;
+    this.updateIsPaused(false);
+    this.updateLorenzSigma(lorenzSigma);
+    this.updateLorenzRho(lorenzRho);
   }
 
   public handleResizeEvent() {
@@ -89,23 +102,51 @@ export class WebGLObjects {
     this._canvasAspectRatio = getCanvasAspectRatio(canvas);
   }
 
-  public draw(nitems: number, rotationMatrix: Matrix44) {
+  public handleWheelEvent(cameraPositionZ: number) {
+    this._cameraPositionZ = cameraPositionZ;
+  }
+
+  public updateIsPaused(isPaused: boolean) {
+    const gl: WebGL2RenderingContext = this._gl;
+    const program: WebGLProgram = this._program;
+    const dt: number = isPaused ? 0 : 0.0075;
+    gl.uniform1f(gl.getUniformLocation(program, "u_dt"), dt);
+  }
+
+  public updateLorenzSigma(lorenzSigma: number) {
+    const gl: WebGL2RenderingContext = this._gl;
+    const program: WebGLProgram = this._program;
+    gl.uniform1f(gl.getUniformLocation(program, "u_lorenz_sigma"), lorenzSigma);
+  }
+
+  public updateLorenzRho(lorenzRho: number) {
+    const gl: WebGL2RenderingContext = this._gl;
+    const program: WebGLProgram = this._program;
+    gl.uniform1f(gl.getUniformLocation(program, "u_lorenz_rho"), lorenzRho);
+  }
+
+  public draw(nitems: number, rotationVector: Vector3, rotationAngle: number) {
     const gl: WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
     const transformFeedback: WebGLTransformFeedback = this._transformFeedback;
-    const buffer1: WebGLBuffer =
-      0 === this._drawCntr % 2 ? this._aPosition1 : this._aPosition2;
-    const buffer2: WebGLBuffer =
-      0 === this._drawCntr % 2 ? this._aPosition2 : this._aPosition1;
+    const buffer1: WebGLBuffer = this._isForward
+      ? this._aPosition1
+      : this._aPosition2;
+    const buffer2: WebGLBuffer = this._isForward
+      ? this._aPosition2
+      : this._aPosition1;
     const canvasAspectRatio = this._canvasAspectRatio;
-    gl.disable(gl.CULL_FACE);
-    gl.disable(gl.DEPTH_TEST);
     //
+    const rotationMatrix = new Matrix44({
+      type: "rotate",
+      angle: rotationAngle,
+      vector: rotationVector,
+    });
     const modelMatrix = rotationMatrix;
     const cameraPosition = new Vector3({
       x: 0,
       y: 0,
-      z: 6.5,
+      z: this._cameraPositionZ,
     });
     const viewMatrix: Matrix44 = new Matrix44({
       type: "translate",
@@ -147,6 +188,6 @@ export class WebGLObjects {
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
-    this._drawCntr += 1;
+    this._isForward = !this._isForward;
   }
 }
