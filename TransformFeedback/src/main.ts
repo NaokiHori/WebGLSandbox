@@ -33,7 +33,7 @@ window.addEventListener("load", () => {
   // main canvas
   const canvas = getElementUnwrap("canvas") as HTMLCanvasElement;
   // initialize points
-  const nitems = 1 << 16;
+  const nitems = 1 << 17;
   console.log(`${nitems.toString()} particles are present`);
   const {
     positions,
