@@ -7,51 +7,86 @@
     <title>__VITE_TITLE__</title>
   </head>
   <body>
-    <h1>__VITE_TITLE__</h1>
-    <h2>Pages</h2>
-    <div>
-      <ul>
-        <li>
-          <a href="FullScreen/index.html"> Full screen </a>
-        </li>
-        <li>
-          <a href="PointSprite/index.html"> Point Sprite </a>
-        </li>
-        <li>
-          <a href="Texture/index.html"> Texture </a>
-        </li>
-        <li>
-          <a href="JuliaSet/index.html"> Julia set </a>
-        </li>
-        <li>
-          <a href="Scalar2D/index.html"> Scalar 2D </a>
-        </li>
-        <li>
-          <a href="Blend2DScalars/index.html"> Blend 2D scalars </a>
-        </li>
-        <li>
-          <a href="ThreeDimensional/index.html"> Three dimensional </a>
-        </li>
-        <li>
-          <a href="TransformFeedback/index.html"> Transform feedback </a>
-        </li>
-      </ul>
-    </div>
-    <h2>References</h2>
-    <ul>
-      <li>
-        <a
-          href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial"
-        >
-          WebGL Tutorial
-        </a>
-      </li>
-      <li>
-        <a href="https://thebookofshaders.com"> The Book of Shaders </a>
-      </li>
-      <li>
-        <a href="https://wgld.org"> wgld.org (in Japanese) </a>
-      </li>
-    </ul>
+    <header>
+      <h1>__VITE_TITLE__</h1>
+      <p>Explore interactive WebGL demos and tutorials</p>
+    </header>
+    <main>
+      <section class="pages">
+        <h2>Pages</h2>
+        <ul>
+          <li>
+            <a href="FullScreen/index.html">Full screen</a>
+            <p class="description">
+              Drawing a circle fitting the entire screen.
+            </p>
+          </li>
+          <li>
+            <a href="PointSprite/index.html">Point Sprite</a>
+            <p class="description">Animating point sprites.</p>
+          </li>
+          <li>
+            <a href="Texture/index.html">Texture</a>
+            <p class="description">
+              Mapping a texture fitting the entire screen.
+            </p>
+          </li>
+          <li>
+            <a href="JuliaSet/index.html">Julia set</a>
+            <p class="description">
+              Kind of a shader art, fitting the entire screen.
+            </p>
+          </li>
+          <li>
+            <a href="Scalar2D/index.html">Scalar 2D</a>
+            <p class="description">
+              Visualizing a two-dimensional scalar fields using texture.
+            </p>
+          </li>
+          <li>
+            <a href="Blend2DScalars/index.html">Blend 2D scalars</a>
+            <p class="description">Blending two scalar fields.</p>
+          </li>
+          <li>
+            <a href="ThreeDimensional/index.html">Three dimensional</a>
+            <p class="description">
+              Rendering a simple 3D object inteactively.
+            </p>
+          </li>
+          <li>
+            <a href="TransformFeedback/index.html">Transform feedback</a>
+            <p class="description">
+              Transform feedback to solve the Lorenz equation.
+            </p>
+          </li>
+        </ul>
+      </section>
+      <section class="references">
+        <h2>References</h2>
+        <ul>
+          <li>
+            <a
+              href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial"
+              target="_blank"
+            >
+              WebGL Tutorial
+            </a>
+          </li>
+          <li>
+            <a href="https://thebookofshaders.com" target="_blank"
+              >The Book of Shaders</a
+            >
+          </li>
+          <li>
+            <a href="https://wgld.org" target="_blank"
+              >wgld.org (in Japanese)</a
+            >
+          </li>
+        </ul>
+      </section>
+    </main>
+    <footer>
+      <p>&#xA9; 2024 Naoki Hori</p>
+    </footer>
   </body>
 </html>
