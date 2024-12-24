@@ -1,15 +1,6 @@
 import { getElementUnwrap, syncCanvasSize } from "../../shared/dom";
 import { WebGLObjects } from "./webgl";
 
-function handleWindowResizeEvent(
-  canvas: HTMLCanvasElement,
-  webGLObjects: WebGLObjects,
-) {
-  syncCanvasSize(canvas);
-  webGLObjects.handleResizeEvent();
-  webGLObjects.draw();
-}
-
 window.addEventListener("load", () => {
   // main canvas
   const canvas = getElementUnwrap("canvas") as HTMLCanvasElement;
@@ -17,11 +8,19 @@ window.addEventListener("load", () => {
   WebGLObjects.setup(canvas)
     .then((webGLObjects: WebGLObjects) => {
       window.addEventListener("resize", () => {
-        handleWindowResizeEvent(canvas, webGLObjects);
+        syncCanvasSize(canvas);
+        webGLObjects.handleResizeEvent();
+        webGLObjects.draw();
       });
-      handleWindowResizeEvent(canvas, webGLObjects);
+      syncCanvasSize(canvas);
+      webGLObjects.handleResizeEvent();
+      webGLObjects.draw();
     })
     .catch((error: unknown) => {
-      throw error;
+      if (error instanceof Error) {
+        console.error(error);
+      } else {
+        throw error;
+      }
     });
 });

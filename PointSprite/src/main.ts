@@ -51,9 +51,9 @@ window.addEventListener("load", () => {
     syncCanvasSize(canvas);
     webGLObjects.handleResizeEvent();
   });
-  // main draw
+  // start rendering loop
   syncCanvasSize(canvas);
   webGLObjects.handleResizeEvent();
-  timer.update();
+  timer.start();
   draw();
 });
