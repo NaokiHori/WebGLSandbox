@@ -32,13 +32,60 @@ export function initVBO(
   return vbo;
 }
 
-export function initIBO(
-  gl: WebGLContext,
-  indexBuffer: Int16Array,
-): WebGLBuffer {
-  const ibo: WebGLBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexBuffer, gl.STATIC_DRAW);
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-  return ibo;
+export class IndexBufferObject {
+  private _gl: WebGLRenderingContext | WebGL2RenderingContext;
+  private _buffer: WebGLBuffer;
+  private _size: GLsizeiptr;
+  private _usage: GLenum;
+
+  private target(gl: WebGLRenderingContext | WebGL2RenderingContext): GLenum {
+    return gl.ELEMENT_ARRAY_BUFFER;
+  }
+
+  public constructor({
+    gl,
+    size,
+    usage,
+  }: {
+    gl: WebGLRenderingContext | WebGL2RenderingContext;
+    size: GLsizeiptr;
+    usage: GLenum;
+  }) {
+    const target: GLenum = this.target(gl);
+    const buffer: WebGLBuffer = gl.createBuffer();
+    gl.bindBuffer(target, buffer);
+    gl.bufferData(target, size, usage);
+    gl.bindBuffer(target, null);
+    this._gl = gl;
+    this._buffer = buffer;
+    this._size = size;
+    this._usage = usage;
+  }
+
+  public copyIntoDataStore({ srcData }: { srcData: Int16Array }) {
+    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
+    const target: GLenum = this.target(gl);
+    const buffer: WebGLBuffer = this._buffer;
+    const size: GLsizeiptr = this._size;
+    const usage: GLenum = this._usage;
+    if (size !== srcData.length) {
+      throw new Error(
+        `Allocated size (${size.toString()}) does not match with the source data size: ${srcData.length.toString()}`,
+      );
+    }
+    gl.bindBuffer(target, buffer);
+    gl.bufferData(target, srcData, usage);
+    gl.bindBuffer(target, null);
+  }
+
+  public draw({ otherTasks }: { otherTasks: () => void }) {
+    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
+    const target: GLenum = this.target(gl);
+    const buffer: WebGLBuffer = this._buffer;
+    const size: GLsizeiptr = this._size;
+    gl.bindBuffer(target, buffer);
+    otherTasks();
+    gl.drawElements(gl.TRIANGLES, size, gl.UNSIGNED_SHORT, 0);
+    gl.bindBuffer(target, null);
+  }
 }

@@ -70,13 +70,13 @@ function computeMetricsOnCircle(
 export function initModel(modelParameter: [number, number]): {
   vertices: Vector3[];
   normals: Vector3[];
-  indexBuffer: Int16Array;
+  indices: Int16Array;
 } {
   const nMeridian = 256;
   const nLongitude = 32;
   let vertices = new Array<Vector3>();
   let normals = new Array<Vector3>();
-  let indexBuffer = new Array<number>();
+  let indices = new Array<number>();
   for (let nM = 0; nM < nMeridian; nM++) {
     const data = computeMetricsOnCircle(
       modelParameter,
@@ -94,17 +94,17 @@ export function initModel(modelParameter: [number, number]): {
         ((nM + 1) % nMeridian) * nLongitude + ((nL + 0) % nLongitude),
         ((nM + 1) % nMeridian) * nLongitude + ((nL + 1) % nLongitude),
       ];
-      indexBuffer = indexBuffer.concat([
+      indices = indices.concat([
         cornerIndices[0],
         cornerIndices[1],
         cornerIndices[2],
       ]);
-      indexBuffer = indexBuffer.concat([
+      indices = indices.concat([
         cornerIndices[1],
         cornerIndices[3],
         cornerIndices[2],
       ]);
     }
   }
-  return { vertices, normals, indexBuffer: new Int16Array(indexBuffer) };
+  return { vertices, normals, indices: new Int16Array(indices) };
 }

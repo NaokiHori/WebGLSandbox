@@ -1,6 +1,10 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { VBOConfig, initVBO, initIBO } from "../../shared/webgl/buffer";
+import {
+  VBOConfig,
+  initVBO,
+  IndexBufferObject,
+} from "../../shared/webgl/buffer";
 import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
 import { initModel } from "./model";
@@ -41,12 +45,11 @@ export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
   private _gl: WebGLContext;
   private _program: WebGLProgram;
-  private _nIndexBuffer: number;
   private _useDiffuseLight: boolean;
   private _useAmbientLight: boolean;
   private _useSpecularLight: boolean;
   private _scale: number;
-  private _ibo: WebGLBuffer;
+  private _indexBufferObject: IndexBufferObject;
 
   constructor(canvas: HTMLCanvasElement, modelParameter: [number, number]) {
     const gl: WebGLContext = getContext(
@@ -109,16 +112,20 @@ export class WebGLObjects {
       } satisfies VBOConfig,
       new Float32Array(colors.flat()),
     );
-    const ibo: WebGLBuffer = initIBO(gl, modelData.indexBuffer);
+    const indexBufferObject = new IndexBufferObject({
+      gl,
+      size: modelData.indices.length,
+      usage: gl.STATIC_DRAW,
+    });
+    indexBufferObject.copyIntoDataStore({ srcData: modelData.indices });
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
-    this._nIndexBuffer = modelData.indexBuffer.length;
     this._scale = 1;
     this._useDiffuseLight = true;
     this._useAmbientLight = true;
     this._useSpecularLight = true;
-    this._ibo = ibo;
+    this._indexBufferObject = indexBufferObject;
   }
 
   public handleResizeEvent() {
@@ -133,6 +140,7 @@ export class WebGLObjects {
     // reset canvas
     const gl: WebGLContext = this._gl;
     const program: WebGLProgram = this._program;
+    const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // object
     const modelMatrix: Matrix44 = getModelMatrix(
@@ -211,9 +219,11 @@ export class WebGLObjects {
       ),
     );
     // draw using index buffer object
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._ibo);
-    gl.drawElements(gl.TRIANGLES, this._nIndexBuffer, gl.UNSIGNED_SHORT, 0);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    indexBufferObject.draw({
+      otherTasks: () => {
+        /* nothing else to do for this ibo */
+      },
+    });
   }
 
   public updateScale(scale: number) {

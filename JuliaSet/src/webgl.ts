@@ -1,17 +1,17 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { initVBO, initIBO } from "../../shared/webgl/buffer";
+import { initVBO, IndexBufferObject } from "../../shared/webgl/buffer";
 import { ClampedValue } from "./clampedValue";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 
 // prepare two triangles filling the entire screen
-function initVertices(): { positions: Float32Array; indexBuffer: Int16Array } {
+function initVertices(): { positions: Float32Array; indices: Int16Array } {
   const positions = [-1, -1, +1, -1, -1, +1, +1, +1];
-  const indexBuffer = [0, 1, 2, 1, 3, 2];
+  const indices = [0, 1, 2, 1, 3, 2];
   return {
     positions: new Float32Array(positions),
-    indexBuffer: new Int16Array(indexBuffer),
+    indices: new Int16Array(indices),
   };
 }
 
@@ -19,7 +19,7 @@ export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
   private _gl: WebGLContext;
   private _program: WebGLProgram;
-  private _indexBufferObject: { nitems: number; buffer: WebGLBuffer };
+  private _indexBufferObject: IndexBufferObject;
 
   constructor(canvas: HTMLCanvasElement, domainSize: ClampedValue) {
     const gl: WebGLContext = getContext(
@@ -33,7 +33,7 @@ export class WebGLObjects {
       fragmentShaderSource,
       transformFeedbackVaryings: [],
     });
-    const { positions, indexBuffer } = initVertices();
+    const { positions, indices } = initVertices();
     initVBO(
       gl,
       program,
@@ -44,6 +44,12 @@ export class WebGLObjects {
       },
       positions,
     );
+    const indexBufferObject = new IndexBufferObject({
+      gl,
+      size: indices.length,
+      usage: gl.STATIC_DRAW,
+    });
+    indexBufferObject.copyIntoDataStore({ srcData: indices });
     gl.uniform1f(
       gl.getUniformLocation(program, "u_domain_size"),
       domainSize.get(),
@@ -51,27 +57,20 @@ export class WebGLObjects {
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
-    this._indexBufferObject = {
-      nitems: indexBuffer.length,
-      buffer: initIBO(gl, indexBuffer),
-    };
+    this._indexBufferObject = indexBufferObject;
   }
 
   public draw(orig: [number, number], ref: [number, number]) {
     const gl: WebGLContext = this._gl;
     const program: WebGLProgram = this._program;
+    const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     gl.uniform2f(gl.getUniformLocation(program, "u_orig"), orig[0], orig[1]);
     gl.uniform2f(gl.getUniformLocation(program, "u_ref"), ref[0], ref[1]);
-    const indexBufferObject = this._indexBufferObject;
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferObject.buffer);
-    gl.drawElements(
-      gl.TRIANGLES,
-      indexBufferObject.nitems,
-      gl.UNSIGNED_SHORT,
-      0,
-    );
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-    gl.flush();
+    indexBufferObject.draw({
+      otherTasks: () => {
+        /* nothing else to do for this ibo */
+      },
+    });
   }
 
   public handleResizeEvent() {

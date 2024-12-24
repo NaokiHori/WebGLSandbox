@@ -10,7 +10,7 @@ window.addEventListener("load", (): void => {
   syncCanvasSize(canvas);
   webGLObjects.handleResizeEvent();
   webGLObjects.draw();
-  // draw on resize window
+  // redraw on resize window
   window.addEventListener("resize", (): void => {
     syncCanvasSize(canvas);
     webGLObjects.handleResizeEvent();

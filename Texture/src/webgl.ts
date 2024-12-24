@@ -1,23 +1,23 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { initVBO, initIBO } from "../../shared/webgl/buffer";
+import { initVBO, IndexBufferObject } from "../../shared/webgl/buffer";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 import sampleImage from "../sample.jpeg";
 
 function initVertices(aspectRatio: number): {
   positions: Float32Array;
-  indexBuffer: Int16Array;
+  indices: Int16Array;
 } {
   const positions = new Array<number[]>();
   positions.push([-aspectRatio, -1]);
   positions.push([+aspectRatio, -1]);
   positions.push([-aspectRatio, +1]);
   positions.push([+aspectRatio, +1]);
-  const indexBuffer = [0, 1, 2, 1, 3, 2];
+  const indices = [0, 1, 2, 1, 3, 2];
   return {
     positions: new Float32Array(positions.flat()),
-    indexBuffer: new Int16Array(indexBuffer),
+    indices: new Int16Array(indices),
   };
 }
 
@@ -25,7 +25,7 @@ export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
   private _gl: WebGLContext;
   private _program: WebGLProgram;
-  private _indexBufferObject: { nitems: number; buffer: WebGLBuffer };
+  private _indexBufferObject: IndexBufferObject;
   private _texture: WebGLTexture;
   private _imageAspectRatio: number;
 
@@ -38,7 +38,7 @@ export class WebGLObjects {
     imageHeight: number,
   ) {
     const imageAspectRatio: number = imageWidth / imageHeight;
-    const { positions, indexBuffer } = initVertices(imageAspectRatio);
+    const { positions, indices } = initVertices(imageAspectRatio);
     initVBO(
       gl,
       program,
@@ -49,13 +49,16 @@ export class WebGLObjects {
       },
       positions,
     );
+    const indexBufferObject = new IndexBufferObject({
+      gl,
+      size: indices.length,
+      usage: gl.STATIC_DRAW,
+    });
+    indexBufferObject.copyIntoDataStore({ srcData: indices });
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
-    this._indexBufferObject = {
-      nitems: indexBuffer.length,
-      buffer: initIBO(gl, indexBuffer),
-    };
+    this._indexBufferObject = indexBufferObject;
     this._texture = texture;
     this._imageAspectRatio = imageAspectRatio;
   }
@@ -136,16 +139,15 @@ export class WebGLObjects {
 
   public draw() {
     const gl: WebGLContext = this._gl;
-    const indexBufferObject = this._indexBufferObject;
+    const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     const texture: WebGLTexture = this._texture;
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferObject.buffer);
-    gl.drawElements(
-      gl.TRIANGLES,
-      indexBufferObject.nitems,
-      gl.UNSIGNED_SHORT,
-      0,
-    );
+    indexBufferObject.draw({
+      otherTasks: () => {
+        /* nothing else to do for this ibo */
+      },
+    });
+    gl.bindTexture(gl.TEXTURE_2D, null);
   }
 }
