@@ -31,6 +31,7 @@ function handleCanvasPointerEvents(
   domainSize: ClampedValue,
   webGLObjects: WebGLObjects,
 ) {
+  event.preventDefault();
   const isBottomHalf = event.clientY / canvas.height < 0.5;
   domainSize.update(domainSize.get() + (isBottomHalf ? -0.1 : +0.1));
   webGLObjects.handleMoveEvent(domainSize);

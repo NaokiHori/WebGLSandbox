@@ -19,7 +19,6 @@ export class WebGLObjects {
   private _gl: WebGL2RenderingContext;
   private _program: WebGLProgram;
   private _scalarTexture: WebGLTexture;
-  private _scalarTextureParam: GLint;
   private _numberOfVertices: number;
   private _nScalarField: number;
   private _scalarGridPoints: [number, number];
@@ -81,11 +80,10 @@ export class WebGLObjects {
     this._gl = gl;
     this._program = program;
     this._scalarTexture = scalarTexture;
-    this._scalarTextureParam = gl.LINEAR;
     this._numberOfVertices = positions.length;
     this._nScalarField = nScalarField;
     this._scalarGridPoints = scalarGridPoints;
-    this.updateTextureParam(this._scalarTextureParam);
+    this.updateTextureParam(gl.LINEAR);
   }
 
   public handleResizeEvent() {
@@ -104,14 +102,6 @@ export class WebGLObjects {
     })();
     gl.viewport(0, 0, w, h);
     gl.uniform2f(gl.getUniformLocation(program, "u_scale"), scale[0], scale[1]);
-  }
-
-  public handleChangeEvent() {
-    const gl: WebGL2RenderingContext = this._gl;
-    const scalarTextureParam: GLint = this._scalarTextureParam;
-    const newScalarTextureParam: GLint =
-      scalarTextureParam === gl.NEAREST ? gl.LINEAR : gl.NEAREST;
-    this.updateTextureParam(newScalarTextureParam);
   }
 
   public draw(scalarField: Uint8Array) {
@@ -158,6 +148,5 @@ export class WebGLObjects {
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
-    this._scalarTextureParam = newScalarTextureParam;
   }
 }
