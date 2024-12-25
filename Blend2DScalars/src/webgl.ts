@@ -1,8 +1,8 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
-import { setupTextureCoordinates } from "../../shared/webgl/setupTexture";
-import { setupRectangleDomain } from "../../shared/webgl/setupRectangleDomain";
+import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
+import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 
@@ -31,12 +31,13 @@ export class WebGLObjects {
       fragmentShaderSource,
       transformFeedbackVaryings: [],
     });
-    const indexBufferObject: IndexBufferObject = setupRectangleDomain({
-      gl,
-      program,
-      attributeName: "a_position",
-      aspectRatio: scalarGridPoints[0] / scalarGridPoints[1],
-    });
+    const { indexBufferObject }: { indexBufferObject: IndexBufferObject } =
+      setupRectangleDomain({
+        gl,
+        program,
+        attributeName: "a_position",
+        aspectRatio: scalarGridPoints[0] / scalarGridPoints[1],
+      });
     // create and upload the scalar field as a texture
     const scalarTexture: WebGLTexture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0);

@@ -22,17 +22,23 @@ export class VertexAttribute {
     this._attributeName = attributeName;
   }
 
-  public bindWithArrayBuffer(
-    gl: WebGLRenderingContext | WebGL2RenderingContext,
-    program: WebGLProgram,
-    size: GLint,
-    vertexBufferObject: VertexBufferObject,
-  ) {
+  public bindWithArrayBuffer({
+    gl,
+    program,
+    size,
+    vertexBufferObject,
+  }: {
+    gl: WebGLRenderingContext | WebGL2RenderingContext;
+    program: WebGLProgram;
+    size: GLint;
+    vertexBufferObject: VertexBufferObject;
+  }) {
     if (1 !== size && 2 !== size && 3 !== size && 4 !== size) {
       throw new Error(
         `The number of components per vertex attribute must be 1, 2, 3, or 4, received: ${size.toString()}`,
       );
     }
+    // check if the buffer is currently bound
     if (
       (gl.getParameter(gl.ARRAY_BUFFER_BINDING) as WebGLBuffer) !==
       vertexBufferObject.buffer
@@ -40,7 +46,6 @@ export class VertexAttribute {
       throw new Error(`Given array buffer is not currently bound`);
     }
     const attributeName: string = this._attributeName;
-    // TODO: check if the buffer is currently bound
     // TODO: for now the data is assumed to be a Float32Array buffer
     const type: GLenum = gl.FLOAT;
     // TODO: for type = gl.FLOAT, this parameter has no effect

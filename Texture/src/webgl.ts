@@ -1,8 +1,8 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
-import { setupTextureCoordinates } from "../../shared/webgl/setupTexture";
-import { setupRectangleDomain } from "../../shared/webgl/setupRectangleDomain";
+import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
+import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 import sampleImage from "../sample.jpeg";
@@ -24,12 +24,13 @@ export class WebGLObjects {
     imageHeight: number,
   ) {
     const imageAspectRatio: number = imageWidth / imageHeight;
-    const indexBufferObject: IndexBufferObject = setupRectangleDomain({
-      gl,
-      program,
-      attributeName: "a_position",
-      aspectRatio: imageAspectRatio,
-    });
+    const { indexBufferObject }: { indexBufferObject: IndexBufferObject } =
+      setupRectangleDomain({
+        gl,
+        program,
+        attributeName: "a_position",
+        aspectRatio: imageAspectRatio,
+      });
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;

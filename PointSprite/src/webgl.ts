@@ -44,14 +44,14 @@ export class WebGLObjects {
           program,
           attributeName: "a_position",
         });
-        vbo.bind(gl);
-        attribute.bindWithArrayBuffer(
+        vbo.bind({ gl });
+        attribute.bindWithArrayBuffer({
           gl,
           program,
-          numberOfItemsForEachVertex,
-          vbo,
-        );
-        vbo.unbind(gl);
+          size: numberOfItemsForEachVertex,
+          vertexBufferObject: vbo,
+        });
+        vbo.unbind({ gl });
         return vbo;
       })();
     this._canvas = canvas;
@@ -107,9 +107,9 @@ export class WebGLObjects {
   public draw(positions: Float32Array) {
     const gl: WebGLContext = this._gl;
     const vbo: VertexBufferObject = this._positionsVertexBufferObject;
-    vbo.bind(gl);
-    vbo.updateData(gl, positions);
-    vbo.draw(gl, gl.POINTS);
-    vbo.unbind(gl);
+    vbo.bind({ gl });
+    vbo.updateData({ gl, data: positions });
+    vbo.draw({ gl, mode: gl.POINTS });
+    vbo.unbind({ gl });
   }
 }

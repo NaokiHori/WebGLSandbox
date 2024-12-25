@@ -2,6 +2,7 @@ import { getContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
 import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
+import { setupStaticallyDrawnData } from "../../shared/webgl/helperFunctions/setupStaticallyDrawnData";
 import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
 import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
@@ -114,38 +115,23 @@ export class WebGLObjects {
       usage: gl.DYNAMIC_COPY,
     });
     // send the initial positions to the first buffer
-    aPosition1.bind(gl);
-    positionsVertexAttribute.bindWithArrayBuffer(
+    aPosition1.bind({ gl });
+    positionsVertexAttribute.bindWithArrayBuffer({
       gl,
       program,
-      aPosition1.numberOfItemsForEachVertex,
-      aPosition1,
-    );
-    aPosition1.updateData(gl, positions);
-    aPosition1.unbind(gl);
-    (function () {
-      const numberOfItemsForEachVertex = "rgb".length;
-      const vbo = new VertexBufferObject({
-        gl,
-        numberOfVertices,
-        numberOfItemsForEachVertex,
-        usage: gl.STATIC_DRAW,
-      });
-      const attribute = new VertexAttribute({
-        gl,
-        program,
-        attributeName: "a_color",
-      });
-      vbo.bind(gl);
-      attribute.bindWithArrayBuffer(
-        gl,
-        program,
-        numberOfItemsForEachVertex,
-        vbo,
-      );
-      vbo.updateData(gl, colors);
-      vbo.unbind(gl);
-    })();
+      size: aPosition1.numberOfItemsForEachVertex,
+      vertexBufferObject: aPosition1,
+    });
+    aPosition1.updateData({ gl, data: positions });
+    aPosition1.unbind({ gl });
+    setupStaticallyDrawnData({
+      gl,
+      program,
+      attributeName: "a_color",
+      numberOfVertices,
+      numberOfItemsForEachVertex: "rgb".length,
+      data: colors,
+    });
     this._lorenzParamters = {
       sigma: new ControlParameters({
         mean: 40,
@@ -281,19 +267,19 @@ export class WebGLObjects {
       ? this._aPosition2
       : this._aPosition1;
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
-    buffer1.bind(gl);
-    positionsVertexAttribute.bindWithArrayBuffer(
+    buffer1.bind({ gl });
+    positionsVertexAttribute.bindWithArrayBuffer({
       gl,
       program,
-      buffer1.numberOfItemsForEachVertex,
-      buffer1,
-    );
+      size: buffer1.numberOfItemsForEachVertex,
+      vertexBufferObject: buffer1,
+    });
     gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, buffer2.buffer);
     gl.beginTransformFeedback(gl.POINTS);
-    buffer1.draw(gl, gl.POINTS);
+    buffer1.draw({ gl, mode: gl.POINTS });
     gl.endTransformFeedback();
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
-    buffer1.unbind(gl);
+    buffer1.unbind({ gl });
     gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
     this._isForward = !this._isForward;
   }

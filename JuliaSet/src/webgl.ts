@@ -1,7 +1,7 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
-import { setupRectangleDomain } from "../../shared/webgl/setupRectangleDomain";
+import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
 import { ClampedValue } from "../../shared/util/clampedValue";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
@@ -24,12 +24,13 @@ export class WebGLObjects {
       fragmentShaderSource,
       transformFeedbackVaryings: [],
     });
-    const indexBufferObject: IndexBufferObject = setupRectangleDomain({
-      gl,
-      program,
-      attributeName: "a_position",
-      aspectRatio: 1,
-    });
+    const { indexBufferObject }: { indexBufferObject: IndexBufferObject } =
+      setupRectangleDomain({
+        gl,
+        program,
+        attributeName: "a_position",
+        aspectRatio: 1,
+      });
     gl.uniform1f(
       gl.getUniformLocation(program, "u_domain_size"),
       domainSize.get(),

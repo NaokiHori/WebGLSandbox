@@ -1,8 +1,7 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
-import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
+import { setupStaticallyDrawnData } from "../../shared/webgl/helperFunctions/setupStaticallyDrawnData";
 import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
 import { initModel } from "./model";
@@ -27,43 +26,6 @@ function getModelMatrix(
     offset,
   });
   return translateMatrix.matmul(rotateMatrix.matmul(scaleMatrix));
-}
-
-// do the following in one-piece
-// - create and allocate vbo
-// - create attribute
-// - bind them
-// - push data (because the vertex information will not be altered)
-function setupVertexBufferObjectAndAttribute({
-  gl,
-  program,
-  attributeName,
-  numberOfVertices,
-  numberOfItemsForEachVertex,
-  data,
-}: {
-  gl: WebGLRenderingContext | WebGL2RenderingContext;
-  program: WebGLProgram;
-  attributeName: string;
-  numberOfVertices: number;
-  numberOfItemsForEachVertex: number;
-  data: Float32Array;
-}) {
-  const vbo = new VertexBufferObject({
-    gl,
-    numberOfVertices,
-    numberOfItemsForEachVertex,
-    usage: gl.STATIC_DRAW,
-  });
-  const attribute = new VertexAttribute({
-    gl,
-    program,
-    attributeName,
-  });
-  vbo.bind(gl);
-  attribute.bindWithArrayBuffer(gl, program, numberOfItemsForEachVertex, vbo);
-  vbo.updateData(gl, data);
-  vbo.unbind(gl);
 }
 
 export class WebGLObjects {
@@ -95,7 +57,7 @@ export class WebGLObjects {
     });
     const modelData = initModel(modelParameter);
     const numberOfVertices = modelData.numberOfVertices;
-    setupVertexBufferObjectAndAttribute({
+    setupStaticallyDrawnData({
       gl,
       program,
       attributeName: "a_position",
@@ -103,7 +65,7 @@ export class WebGLObjects {
       numberOfItemsForEachVertex: "xyz".length,
       data: modelData.vertices,
     });
-    setupVertexBufferObjectAndAttribute({
+    setupStaticallyDrawnData({
       gl,
       program,
       attributeName: "a_normal",
@@ -111,7 +73,7 @@ export class WebGLObjects {
       numberOfItemsForEachVertex: "xyz".length,
       data: modelData.normals,
     });
-    setupVertexBufferObjectAndAttribute({
+    setupStaticallyDrawnData({
       gl,
       program,
       attributeName: "a_color",

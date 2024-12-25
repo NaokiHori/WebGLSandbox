@@ -26,14 +26,14 @@ export class VertexBufferObject {
       Float32Array.BYTES_PER_ELEMENT *
       numberOfVertices *
       numberOfItemsForEachVertex;
-    this.bind(gl);
+    this.bind({ gl });
     gl.bufferData(target, size, usage);
-    this.unbind(gl);
+    this.unbind({ gl });
     this._numberOfVertices = numberOfVertices;
     this._numberOfItemsForEachVertex = numberOfItemsForEachVertex;
   }
 
-  public bind(gl: WebGLRenderingContext | WebGL2RenderingContext) {
+  public bind({ gl }: { gl: WebGLRenderingContext | WebGL2RenderingContext }) {
     const currentlyBoundBuffer: WebGLBuffer | null =
       getCurrentlyBoundBuffer(gl);
     if (currentlyBoundBuffer !== null) {
@@ -43,7 +43,11 @@ export class VertexBufferObject {
     gl.bindBuffer(target, this._buffer);
   }
 
-  public unbind(gl: WebGLRenderingContext | WebGL2RenderingContext) {
+  public unbind({
+    gl,
+  }: {
+    gl: WebGLRenderingContext | WebGL2RenderingContext;
+  }) {
     const currentlyBoundBuffer: WebGLBuffer | null =
       getCurrentlyBoundBuffer(gl);
     if (currentlyBoundBuffer !== this._buffer) {
@@ -53,10 +57,13 @@ export class VertexBufferObject {
     gl.bindBuffer(target, null);
   }
 
-  public updateData(
-    gl: WebGLRenderingContext | WebGL2RenderingContext,
-    data: Float32Array,
-  ) {
+  public updateData({
+    gl,
+    data,
+  }: {
+    gl: WebGLRenderingContext | WebGL2RenderingContext;
+    data: Float32Array;
+  }) {
     const expectedLength: number =
       this._numberOfVertices * this._numberOfItemsForEachVertex;
     if (data.length !== expectedLength) {
@@ -68,10 +75,13 @@ export class VertexBufferObject {
     gl.bufferSubData(target, 0, data);
   }
 
-  public draw(
-    gl: WebGLRenderingContext | WebGL2RenderingContext,
-    mode: GLenum,
-  ) {
+  public draw({
+    gl,
+    mode,
+  }: {
+    gl: WebGLRenderingContext | WebGL2RenderingContext;
+    mode: GLenum;
+  }) {
     const numberOfVertices: number = this._numberOfVertices;
     gl.drawArrays(mode, 0, numberOfVertices);
   }
