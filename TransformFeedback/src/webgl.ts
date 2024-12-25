@@ -164,7 +164,7 @@ export class WebGLObjects {
     this._canvasAspectRatio = getCanvasAspectRatio(canvas);
   }
 
-  public handleWheelEvent(cameraPositionZ: number) {
+  public updateCameraPositionZ(cameraPositionZ: number) {
     this._cameraPositionZ = cameraPositionZ;
   }
 

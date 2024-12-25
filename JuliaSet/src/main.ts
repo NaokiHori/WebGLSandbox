@@ -2,7 +2,7 @@ import { getElementUnwrap, syncCanvasSize } from "../../shared/dom";
 import { Timer } from "../../shared/util/timer";
 import { WebGLObjects } from "./webgl";
 import { ClampedValue } from "../../shared/util/clampedValue";
-import { PointerEvents } from "./pointerEvents";
+import { PointerEvents } from "../../shared/pointerEvents";
 import { Toggle } from "../../shared/util/toggle";
 import { Lissajous } from "./lissajous";
 import { saveJPEGImage } from "../../shared/saveJPEGImage";

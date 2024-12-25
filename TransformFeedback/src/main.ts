@@ -6,6 +6,7 @@ import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import { ClampedValue } from "../../shared/util/clampedValue";
 import { Toggle } from "../../shared/util/toggle";
 import { saveJPEGImage } from "../../shared/saveJPEGImage";
+import { PointerEvents } from "../../shared/pointerEvents";
 
 function convertHslToRgb(h: number, s: number, l: number) {
   if (h < 0 || 1 < h) {
@@ -79,7 +80,7 @@ function handleWindowWheelEvent(
 ) {
   event.preventDefault();
   cameraPositionZ.update(cameraPositionZ.get() + event.deltaY * 0.005);
-  webGLObjects.handleWheelEvent(cameraPositionZ.get());
+  webGLObjects.updateCameraPositionZ(cameraPositionZ.get());
 }
 
 function handleDocumentKeyDownP(isPaused: Toggle, webGLObjects: WebGLObjects) {
@@ -91,11 +92,23 @@ function handleDocumentKeyDownS(canvas: HTMLCanvasElement, fileName: string) {
   saveJPEGImage(canvas, fileName);
 }
 
+function handleCanvasPointerEvents(
+  event: MouseEvent,
+  canvas: HTMLCanvasElement,
+  cameraPositionZ: ClampedValue,
+  webGLObjects: WebGLObjects,
+) {
+  event.preventDefault();
+  const isBottomHalf = event.clientY / canvas.height < 0.5;
+  cameraPositionZ.update(cameraPositionZ.get() + (isBottomHalf ? -0.1 : +0.1));
+  webGLObjects.updateCameraPositionZ(cameraPositionZ.get());
+}
+
 window.addEventListener("load", () => {
   // main canvas
   const canvas = getElementUnwrap("canvas") as HTMLCanvasElement;
   // initialize points
-  const nitems = 1 << 16;
+  const nitems = 1 << 17;
   console.log(`${nitems.toString()} particles are present`);
   const {
     positions,
@@ -152,6 +165,9 @@ window.addEventListener("load", () => {
     } else if ("s" === key) {
       handleDocumentKeyDownS(canvas, "image.jpeg");
     }
+  });
+  new PointerEvents(canvas, (event: MouseEvent) => {
+    handleCanvasPointerEvents(event, canvas, cameraPositionZ, webGLObjects);
   });
   // main draw
   syncCanvasSize(canvas);
