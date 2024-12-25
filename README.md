@@ -6,9 +6,16 @@
 
 [![CoverImage](https://github.com/NaokiHori/WebGLSandbox/blob/main/cover_image.jpg)](https://youtube.com/shorts/ZipSsWJK-c8)
 
-Various simple scenarios utilizing [WebGL](https://www.khronos.org/webgl/).
+Various simple scenarios utilizing [WebGL](https://www.khronos.org/webgl/) which are potentially useful for in-situ visualization of various numerical simulations, including
+
+- [Consistent size adjustments of the rendering scenes with HTML canvas elements](https://naokihori.github.io/WebGLSandbox/FullScreen/index.html)
+- [Point sprites](https://naokihori.github.io/WebGLSandbox/PointSprite/index.html)
+- [Shader art](https://naokihori.github.io/WebGLSandbox/JuliaSet/index.html)
+- [Texture](https://naokihori.github.io/WebGLSandbox/Blend2DScalars/index.html)
+- [Matrix manipulations and light, camera, model configurations](https://naokihori.github.io/WebGLSandbox/ThreeDimensional/index.html)
+- [Transform feedback](https://naokihori.github.io/WebGLSandbox/TransformFeedback/index.html)
 
 ## Quick Start
 
 Visit [the site](https://naokihori.github.io/WebGLSandbox/).
-[Your browser should support `WebGL`](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API#browser_compatibility).
+[Your browser should support `WebGL2`](https://caniuse.com/?search=webgl2).
