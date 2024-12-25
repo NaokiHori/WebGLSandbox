@@ -1,10 +1,7 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import {
-  VBOConfig,
-  initVBO,
-  IndexBufferObject,
-} from "../../shared/webgl/buffer";
+import { VBOConfig, initVBO } from "../../shared/webgl/buffer";
+import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
 import { initModel } from "./model";

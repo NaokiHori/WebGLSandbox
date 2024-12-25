@@ -1,6 +1,7 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { initVBO, IndexBufferObject } from "../../shared/webgl/buffer";
+import { initVBO } from "../../shared/webgl/buffer";
+import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 import sampleImage from "../sample.jpeg";
