@@ -5,6 +5,7 @@ import { Counter } from "../../shared/util/counter";
 import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import { ClampedValue } from "../../shared/util/clampedValue";
 import { Toggle } from "../../shared/util/toggle";
+import { saveJPEGImage } from "../../shared/saveJPEGImage";
 
 function convertHslToRgb(h: number, s: number, l: number) {
   const c = (1 - Math.abs(2 * l - 1)) * s;
@@ -109,6 +110,10 @@ function handleDocumentKeyDownArrowRight(
   webGLObjects.updateLorenzRho(clampedValue.get());
 }
 
+function handleDocumentKeyDownS(canvas: HTMLCanvasElement, fileName: string) {
+  saveJPEGImage(canvas, fileName);
+}
+
 window.addEventListener("load", () => {
   // main canvas
   const canvas = getElementUnwrap("canvas") as HTMLCanvasElement;
@@ -185,6 +190,8 @@ window.addEventListener("load", () => {
     const key: string = event.key;
     if ("p" === key) {
       handleDocumentKeyDownP(isPaused, webGLObjects);
+    } else if ("s" === key) {
+      handleDocumentKeyDownS(canvas, "image.jpeg");
     } else if ("ArrowDown" === key) {
       handleDocumentKeyDownArrowDown(lorenzParameters.sigma, webGLObjects);
     } else if ("ArrowUp" === key) {

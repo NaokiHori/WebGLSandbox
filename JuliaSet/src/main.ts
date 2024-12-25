@@ -5,7 +5,7 @@ import { ClampedValue } from "../../shared/util/clampedValue";
 import { PointerEvents } from "./pointerEvents";
 import { Toggle } from "../../shared/util/toggle";
 import { Lissajous } from "./lissajous";
-import { savePPMImage } from "../../shared/savePPMImage";
+import { saveJPEGImage } from "../../shared/saveJPEGImage";
 
 function handleWindowResizeEvent(
   canvas: HTMLCanvasElement,
@@ -37,11 +37,8 @@ function handleCanvasPointerEvents(
   webGLObjects.handleMoveEvent(domainSize);
 }
 
-function handleDocumentKeyDownS(webGLObjects: WebGLObjects) {
-  if (new URLSearchParams(window.location.search).has("savePPMImage")) {
-    const { width, height, pixelData } = webGLObjects.getPixelData();
-    savePPMImage({ fileName: "image.ppm", width, height, pixelData });
-  }
+function handleDocumentKeyDownS(canvas: HTMLCanvasElement, fileName: string) {
+  saveJPEGImage(canvas, fileName);
 }
 
 function handleDocumentKeyDownP(isPaused: Toggle) {
@@ -115,7 +112,7 @@ window.addEventListener("load", () => {
   document.addEventListener("keydown", (event: KeyboardEvent) => {
     const key: string = event.key;
     if ("s" === key) {
-      handleDocumentKeyDownS(webGLObjects);
+      handleDocumentKeyDownS(canvas, "image.jpeg");
     } else if ("p" === key) {
       handleDocumentKeyDownP(isPaused);
     } else if ("ArrowDown" === key) {

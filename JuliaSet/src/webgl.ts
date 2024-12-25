@@ -101,12 +101,12 @@ export class WebGLObjects {
     const width = gl.drawingBufferWidth;
     const height = gl.drawingBufferHeight;
     const rgbaData = new Uint8Array(width * height * "rgba".length);
+    const rgbData = new Uint8Array(width * height * "rgb".length);
     gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, rgbaData);
-    const rgbData = new Array<number>();
-    for (const [index, element] of rgbaData.entries()) {
-      if (index % "rgba".length != "rgba".length - 1) {
-        rgbData.push(element);
-      }
+    for (let n = 0; n < width * height; n += 1) {
+      rgbData[3 * n + 0] = rgbaData[4 * n + 0];
+      rgbData[3 * n + 1] = rgbaData[4 * n + 1];
+      rgbData[3 * n + 2] = rgbaData[4 * n + 2];
     }
     return { width, height, pixelData: new Uint8Array(rgbData) };
   }

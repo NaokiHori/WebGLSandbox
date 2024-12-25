@@ -34,11 +34,13 @@ export class WebGLObjects {
   ) {
     const gl: WebGL2RenderingContext = getContext(
       canvas,
-      { preserveDrawingBuffer: false },
+      { preserveDrawingBuffer: true },
       false,
     ) as WebGL2RenderingContext;
     gl.disable(gl.CULL_FACE);
     gl.disable(gl.DEPTH_TEST);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearDepth(1);
     const program: WebGLProgram = initProgram({
       gl,
       vertexShaderSource,
@@ -137,6 +139,7 @@ export class WebGLObjects {
       : this._aPosition1;
     const canvasAspectRatio = this._canvasAspectRatio;
     //
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     const rotationMatrix = new Matrix44({
       type: "rotate",
       angle: rotationAngle,
