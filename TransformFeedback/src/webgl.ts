@@ -6,6 +6,49 @@ import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 
+class ControlParameters {
+  private _mean: number;
+  private _amp: number;
+  private _freq: number;
+  private _phase: number;
+  private _time: number;
+
+  public constructor({
+    mean,
+    amp,
+    freq,
+    phase,
+  }: {
+    mean: number;
+    amp: number;
+    freq: number;
+    phase: number;
+  }) {
+    this._mean = mean;
+    this._amp = amp;
+    this._freq = freq;
+    this._phase = phase;
+    this._time = 0;
+    this.update();
+  }
+
+  public update() {
+    this._time += 0.01;
+  }
+
+  public get(): number {
+    return (
+      this._mean + this._amp * Math.sin(this._freq * this._time + this._phase)
+    );
+  }
+}
+
+interface LorenzParameters {
+  sigma: ControlParameters;
+  rho: ControlParameters;
+  beta: ControlParameters;
+}
+
 function getCanvasAspectRatio(canvas: HTMLCanvasElement): number {
   return canvas.width / canvas.height;
 }
@@ -15,6 +58,7 @@ export class WebGLObjects {
   private _canvasAspectRatio: number;
   private _gl: WebGL2RenderingContext;
   private _program: WebGLProgram;
+  private _lorenzParamters: LorenzParameters;
   private _aPosition1: WebGLBuffer;
   private _aPosition2: WebGLBuffer;
   private _transformFeedback: WebGLTransformFeedback;
@@ -29,8 +73,6 @@ export class WebGLObjects {
     positions: Float32Array,
     colors: Float32Array,
     cameraPositionZ: number,
-    lorenzSigma: number,
-    lorenzRho: number,
   ) {
     const gl: WebGL2RenderingContext = getContext(
       canvas,
@@ -80,6 +122,26 @@ export class WebGLObjects {
       },
       colors,
     );
+    this._lorenzParamters = {
+      sigma: new ControlParameters({
+        mean: 40,
+        amp: 20,
+        freq: 4 * Math.random(),
+        phase: Math.random(),
+      }),
+      rho: new ControlParameters({
+        mean: 50,
+        amp: 35,
+        freq: 0.5 * Math.random(),
+        phase: Math.random(),
+      }),
+      beta: new ControlParameters({
+        mean: 8 / 3,
+        amp: 2,
+        freq: 0.1 * Math.random(),
+        phase: Math.random(),
+      }),
+    };
     //
     this._canvas = canvas;
     this._canvasAspectRatio = getCanvasAspectRatio(canvas);
@@ -91,8 +153,6 @@ export class WebGLObjects {
     this._isForward = true;
     this._cameraPositionZ = cameraPositionZ;
     this.updateIsPaused(false);
-    this.updateLorenzSigma(lorenzSigma);
-    this.updateLorenzRho(lorenzRho);
   }
 
   public handleResizeEvent() {
@@ -115,16 +175,34 @@ export class WebGLObjects {
     gl.uniform1f(gl.getUniformLocation(program, "u_dt"), dt);
   }
 
-  public updateLorenzSigma(lorenzSigma: number) {
+  private updateLorenzParameters() {
     const gl: WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
-    gl.uniform1f(gl.getUniformLocation(program, "u_lorenz_sigma"), lorenzSigma);
+    const lorenzParameters: LorenzParameters = this._lorenzParamters;
+    lorenzParameters.sigma.update();
+    lorenzParameters.rho.update();
+    lorenzParameters.beta.update();
+    gl.uniform1f(
+      gl.getUniformLocation(program, "u_lorenz_sigma"),
+      lorenzParameters.sigma.get(),
+    );
+    gl.uniform1f(
+      gl.getUniformLocation(program, "u_lorenz_rho"),
+      lorenzParameters.rho.get(),
+    );
+    gl.uniform1f(
+      gl.getUniformLocation(program, "u_lorenz_beta"),
+      lorenzParameters.beta.get(),
+    );
   }
 
-  public updateLorenzRho(lorenzRho: number) {
-    const gl: WebGL2RenderingContext = this._gl;
-    const program: WebGLProgram = this._program;
-    gl.uniform1f(gl.getUniformLocation(program, "u_lorenz_rho"), lorenzRho);
+  public getLorenzParameters(): [number, number, number] {
+    const lorenzParameters: LorenzParameters = this._lorenzParamters;
+    return [
+      lorenzParameters.sigma.get(),
+      lorenzParameters.rho.get(),
+      lorenzParameters.beta.get(),
+    ];
   }
 
   public draw(nitems: number, rotationVector: Vector3, rotationAngle: number) {
@@ -140,6 +218,7 @@ export class WebGLObjects {
     const canvasAspectRatio = this._canvasAspectRatio;
     //
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    this.updateLorenzParameters();
     const rotationMatrix = new Matrix44({
       type: "rotate",
       angle: rotationAngle,

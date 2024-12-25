@@ -78,38 +78,6 @@ function handleDocumentKeyDownP(isPaused: Toggle, webGLObjects: WebGLObjects) {
   webGLObjects.updateIsPaused(isPaused.getCurrentState());
 }
 
-function handleDocumentKeyDownArrowDown(
-  clampedValue: ClampedValue,
-  webGLObjects: WebGLObjects,
-) {
-  clampedValue.update(clampedValue.get() - 1);
-  webGLObjects.updateLorenzSigma(clampedValue.get());
-}
-
-function handleDocumentKeyDownArrowUp(
-  clampedValue: ClampedValue,
-  webGLObjects: WebGLObjects,
-) {
-  clampedValue.update(clampedValue.get() + 1);
-  webGLObjects.updateLorenzSigma(clampedValue.get());
-}
-
-function handleDocumentKeyDownArrowLeft(
-  clampedValue: ClampedValue,
-  webGLObjects: WebGLObjects,
-) {
-  clampedValue.update(clampedValue.get() - 1);
-  webGLObjects.updateLorenzRho(clampedValue.get());
-}
-
-function handleDocumentKeyDownArrowRight(
-  clampedValue: ClampedValue,
-  webGLObjects: WebGLObjects,
-) {
-  clampedValue.update(clampedValue.get() + 1);
-  webGLObjects.updateLorenzRho(clampedValue.get());
-}
-
 function handleDocumentKeyDownS(canvas: HTMLCanvasElement, fileName: string) {
   saveJPEGImage(canvas, fileName);
 }
@@ -130,25 +98,11 @@ window.addEventListener("load", () => {
     maxValue: 10,
     defaultValue: 6,
   });
-  const lorenzParameters = {
-    sigma: new ClampedValue({
-      minValue: 1,
-      maxValue: 100,
-      defaultValue: 10,
-    }),
-    rho: new ClampedValue({
-      minValue: 1,
-      maxValue: 100,
-      defaultValue: 28,
-    }),
-  };
   const webGLObjects = new WebGLObjects(
     canvas,
     positions,
     colors,
     cameraPositionZ.get(),
-    lorenzParameters.sigma.get(),
-    lorenzParameters.rho.get(),
   );
   const isPaused = new Toggle({
     defaultState: false,
@@ -161,11 +115,7 @@ window.addEventListener("load", () => {
   });
   // performance checker
   const timer = new Timer(1000, () => {
-    const sigma = lorenzParameters.sigma.get();
-    const rho = lorenzParameters.rho.get();
-    console.log(
-      `  Lorenz parameters: (sigma: ${sigma.toString()}, rho: ${rho.toString()})`,
-    );
+    console.log(webGLObjects.getLorenzParameters().toString());
   });
   const rotationVector = new Vector3({
     x: Math.random(),
@@ -192,14 +142,6 @@ window.addEventListener("load", () => {
       handleDocumentKeyDownP(isPaused, webGLObjects);
     } else if ("s" === key) {
       handleDocumentKeyDownS(canvas, "image.jpeg");
-    } else if ("ArrowDown" === key) {
-      handleDocumentKeyDownArrowDown(lorenzParameters.sigma, webGLObjects);
-    } else if ("ArrowUp" === key) {
-      handleDocumentKeyDownArrowUp(lorenzParameters.sigma, webGLObjects);
-    } else if ("ArrowLeft" === key) {
-      handleDocumentKeyDownArrowLeft(lorenzParameters.rho, webGLObjects);
-    } else if ("ArrowRight" === key) {
-      handleDocumentKeyDownArrowRight(lorenzParameters.rho, webGLObjects);
     }
   });
   // main draw

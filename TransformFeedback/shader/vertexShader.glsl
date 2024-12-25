@@ -4,10 +4,9 @@ precision highp float;
 
 const float PI = 3.14159265358979323846;
 
-const float BETA = 8. / 3.;
-
 uniform float u_lorenz_sigma;
 uniform float u_lorenz_rho;
+uniform float u_lorenz_beta;
 uniform float u_dt;
 uniform mat4 u_mvp_matrix;
 uniform float u_point_size;
@@ -25,7 +24,7 @@ vec3 compute_velocity(vec3 position) {
   return vec3(
       u_lorenz_sigma * (y - x),
       x * (u_lorenz_rho - z) - y,
-      x * y - BETA * z
+      x * y - u_lorenz_beta * z
   );
 }
 
