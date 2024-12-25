@@ -171,7 +171,7 @@ export class WebGLObjects {
   public updateIsPaused(isPaused: boolean) {
     const gl: WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
-    const dt: number = isPaused ? 0 : 0.0075;
+    const dt: number = isPaused ? 0 : 0.002;
     gl.uniform1f(gl.getUniformLocation(program, "u_dt"), dt);
   }
 

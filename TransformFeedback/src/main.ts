@@ -8,6 +8,15 @@ import { Toggle } from "../../shared/util/toggle";
 import { saveJPEGImage } from "../../shared/saveJPEGImage";
 
 function convertHslToRgb(h: number, s: number, l: number) {
+  if (h < 0 || 1 < h) {
+    throw new Error(`invalid hue value: ${h.toString()}`);
+  }
+  if (s < 0 || 1 < s) {
+    throw new Error(`invalid saturation value: ${s.toString()}`);
+  }
+  if (l < 0 || 1 < l) {
+    throw new Error(`invalid lightness value: ${l.toString()}`);
+  }
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const hp = 6 * h;
   const x = c * (1 - Math.abs(hp % 2));
@@ -43,8 +52,8 @@ function initParticles(nitems: number): {
     const z = 2 * (Math.random() - 0.5);
     const position = [factor * x, factor * y, factor * z];
     positions.push(position);
-    const h = 0.5 * (x * y + 1);
-    const s = 1;
+    const h = 0.5 + Math.atan2(y, x) / 2 / Math.PI;
+    const s = 0.5 * (1 + z);
     const l = 0.8;
     const [r, g, b] = convertHslToRgb(h, s, l);
     colors.push([r, g, b]);
