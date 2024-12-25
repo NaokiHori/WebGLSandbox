@@ -6,8 +6,6 @@ function computeMetricsOnCircle(
   nLongitude: number,
   s: number,
 ): { vertices: Vector3[]; normals: Vector3[] } {
-  const vertices = new Array<Vector3>();
-  const normals = new Array<Vector3>();
   // radius of circle around the torus knot
   const radius = 0.1;
   // torus knot: s in [0 : 1]
@@ -51,6 +49,8 @@ function computeMetricsOnCircle(
       vector: new Vector3({ x: i / norm, y: j / norm, z: k / norm }),
     });
   })();
+  const vertices = new Array<Vector3>(nLongitude);
+  const normals = new Array<Vector3>(nLongitude);
   for (let nL = 0; nL < nLongitude; nL++) {
     const angle = (2 * Math.PI * nL) / nLongitude;
     const normal = rotateMatrix.dot(
@@ -61,16 +61,28 @@ function computeMetricsOnCircle(
       }),
     );
     const vertex = center.add(normal.multiply(radius));
-    vertices.push(vertex);
-    normals.push(normal);
+    vertices[nL] = vertex;
+    normals[nL] = normal;
   }
   return { vertices, normals };
 }
 
+function initColors(vertices: Vector3[]): number[][] {
+  const rgbs = [0.6627450980392157, 0.807843137254902, 0.9254901960784314].sort(
+    () => Math.random() - 0.5,
+  );
+  const colors = vertices.map(() => {
+    return rgbs.concat([1]);
+  });
+  return colors;
+}
+
 export function initModel(modelParameter: [number, number]): {
-  vertices: Vector3[];
-  normals: Vector3[];
+  numberOfVertices: number;
+  vertices: Float32Array;
+  normals: Float32Array;
   indices: Int16Array;
+  colors: Float32Array;
 } {
   const nMeridian = 256;
   const nLongitude = 32;
@@ -78,13 +90,16 @@ export function initModel(modelParameter: [number, number]): {
   let normals = new Array<Vector3>();
   let indices = new Array<number>();
   for (let nM = 0; nM < nMeridian; nM++) {
-    const data = computeMetricsOnCircle(
+    const {
+      vertices: verticesOnCircle,
+      normals: normalsOnCircle,
+    }: { vertices: Vector3[]; normals: Vector3[] } = computeMetricsOnCircle(
       modelParameter,
       nLongitude,
       nM / nMeridian,
     );
-    vertices = vertices.concat(data.vertices);
-    normals = normals.concat(data.normals);
+    vertices = vertices.concat(verticesOnCircle);
+    normals = normals.concat(normalsOnCircle);
   }
   for (let nM = 0; nM < nMeridian; nM++) {
     for (let nL = 0; nL < nLongitude; nL++) {
@@ -106,5 +121,16 @@ export function initModel(modelParameter: [number, number]): {
       ]);
     }
   }
-  return { vertices, normals, indices: new Int16Array(indices) };
+  const colors: number[][] = initColors(vertices);
+  return {
+    numberOfVertices: nMeridian * nLongitude,
+    vertices: new Float32Array(
+      vertices.flatMap((vertex: Vector3) => vertex.flat()),
+    ),
+    normals: new Float32Array(
+      normals.flatMap((normal: Vector3) => normal.flat()),
+    ),
+    indices: new Int16Array(indices),
+    colors: new Float32Array(colors.flat()),
+  };
 }

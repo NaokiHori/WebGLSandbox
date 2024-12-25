@@ -1,6 +1,7 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { initVBO } from "../../shared/webgl/buffer";
+import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
+import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 
@@ -10,13 +11,14 @@ export class WebGLObjects {
   private _program: WebGLProgram;
   private _minLength: number;
   private _pointSize: number;
-  private _positionsVBO: WebGLBuffer;
+  private _positionsVertexBufferObject: VertexBufferObject;
 
   public constructor(
     canvas: HTMLCanvasElement,
+    numberOfVertices: number,
+    numberOfItemsForEachVertex: number,
     minLength: number,
     pointSize: number,
-    positions: Float32Array,
   ) {
     const gl: WebGLContext = getContext(
       canvas,
@@ -29,21 +31,35 @@ export class WebGLObjects {
       fragmentShaderSource,
       transformFeedbackVaryings: [],
     });
+    const positionsVertexBufferObject: VertexBufferObject =
+      (function initializePositionsVertexBufferObject() {
+        const vbo = new VertexBufferObject({
+          gl,
+          numberOfVertices,
+          numberOfItemsForEachVertex,
+          usage: gl.DYNAMIC_DRAW,
+        });
+        const attribute = new VertexAttribute({
+          gl,
+          program,
+          attributeName: "a_position",
+        });
+        vbo.bind(gl);
+        attribute.bindWithArrayBuffer(
+          gl,
+          program,
+          numberOfItemsForEachVertex,
+          vbo,
+        );
+        vbo.unbind(gl);
+        return vbo;
+      })();
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
     this._minLength = minLength;
     this._pointSize = pointSize;
-    this._positionsVBO = initVBO(
-      gl,
-      program,
-      {
-        attributeName: "a_position",
-        stride: "xy".length,
-        usage: gl.DYNAMIC_DRAW,
-      },
-      positions,
-    );
+    this._positionsVertexBufferObject = positionsVertexBufferObject;
   }
 
   public handleResizeEvent() {
@@ -88,13 +104,12 @@ export class WebGLObjects {
     );
   }
 
-  public draw(nitems: number, positions: Float32Array) {
+  public draw(positions: Float32Array) {
     const gl: WebGLContext = this._gl;
-    const positionsVBO: WebGLBuffer = this._positionsVBO;
-    // send positions for every time
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionsVBO);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, positions);
-    gl.drawArrays(gl.POINTS, 0, nitems);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    const vbo: VertexBufferObject = this._positionsVertexBufferObject;
+    vbo.bind(gl);
+    vbo.updateData(gl, positions);
+    vbo.draw(gl, gl.POINTS);
+    vbo.unbind(gl);
   }
 }

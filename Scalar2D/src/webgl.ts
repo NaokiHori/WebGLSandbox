@@ -1,26 +1,18 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { initVBO } from "../../shared/webgl/buffer";
+import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
+import { setupTextureCoordinates } from "../../shared/webgl/setupTexture";
+import { setupRectangleDomain } from "../../shared/webgl/setupRectangleDomain";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
-
-// prepare two triangles filling the entire screen
-function initPositions(aspectRatio: number): number[][] {
-  const positions = new Array<number[]>();
-  positions.push([-aspectRatio, -1]);
-  positions.push([+aspectRatio, -1]);
-  positions.push([-aspectRatio, +1]);
-  positions.push([+aspectRatio, +1]);
-  return positions;
-}
 
 export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
   private _gl: WebGL2RenderingContext;
   private _program: WebGLProgram;
+  private _indexBufferObject: IndexBufferObject;
   private _scalarTexture: WebGLTexture;
   private _scalarTextureParam: GLint;
-  private _numberOfVertices: number;
   private _scalarGridPoints: [number, number];
 
   public constructor(
@@ -38,19 +30,12 @@ export class WebGLObjects {
       fragmentShaderSource,
       transformFeedbackVaryings: [],
     });
-    const positions: number[][] = initPositions(
-      scalarGridPoints[0] / scalarGridPoints[1],
-    );
-    initVBO(
+    const indexBufferObject: IndexBufferObject = setupRectangleDomain({
       gl,
       program,
-      {
-        attributeName: "a_position",
-        stride: "xy".length,
-        usage: gl.STATIC_DRAW,
-      },
-      new Float32Array(positions.flat()),
-    );
+      attributeName: "a_position",
+      aspectRatio: scalarGridPoints[0] / scalarGridPoints[1],
+    });
     // create and upload the scalar field as a texture
     const scalarTexture: WebGLTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, scalarTexture);
@@ -66,23 +51,18 @@ export class WebGLObjects {
       new Uint8Array(scalarGridPoints[0] * scalarGridPoints[1]),
     );
     gl.bindTexture(gl.TEXTURE_2D, null);
-    initVBO(
+    setupTextureCoordinates({
       gl,
       program,
-      {
-        attributeName: "a_texture_coordinates",
-        stride: "xy".length,
-        usage: gl.STATIC_DRAW,
-      },
-      new Float32Array([0, 1, 1, 1, 0, 0, 1, 0]),
-    );
+      attributeName: "a_texture_coordinates",
+    });
     gl.uniform1i(gl.getUniformLocation(program, "u_scalar_field"), 0);
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
+    this._indexBufferObject = indexBufferObject;
     this._scalarTexture = scalarTexture;
     this._scalarTextureParam = gl.LINEAR;
-    this._numberOfVertices = positions.length;
     this._scalarGridPoints = scalarGridPoints;
     this.updateTextureParam(this._scalarTextureParam);
   }
@@ -115,7 +95,7 @@ export class WebGLObjects {
 
   public draw(scalarField: Uint8Array) {
     const gl: WebGL2RenderingContext = this._gl;
-    const numberOfVertices: number = this._numberOfVertices;
+    const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     const scalarTexture: WebGLTexture = this._scalarTexture;
     const scalarGridPoints: [number, number] = this._scalarGridPoints;
     if (scalarField.length !== scalarGridPoints[0] * scalarGridPoints[1]) {
@@ -135,7 +115,9 @@ export class WebGLObjects {
       gl.UNSIGNED_BYTE,
       scalarField,
     );
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, numberOfVertices);
+    indexBufferObject.bind({ gl });
+    indexBufferObject.draw({ gl, mode: gl.TRIANGLES });
+    indexBufferObject.unbind({ gl });
     gl.bindTexture(gl.TEXTURE_2D, null);
   }
 

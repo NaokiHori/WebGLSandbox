@@ -1,20 +1,10 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { initVBO } from "../../shared/webgl/buffer";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
+import { setupRectangleDomain } from "../../shared/webgl/setupRectangleDomain";
 import { ClampedValue } from "../../shared/util/clampedValue";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
-
-// prepare two triangles filling the entire screen
-function initVertices(): { positions: Float32Array; indices: Int16Array } {
-  const positions = [-1, -1, +1, -1, -1, +1, +1, +1];
-  const indices = [0, 1, 2, 1, 3, 2];
-  return {
-    positions: new Float32Array(positions),
-    indices: new Int16Array(indices),
-  };
-}
 
 export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
@@ -34,23 +24,12 @@ export class WebGLObjects {
       fragmentShaderSource,
       transformFeedbackVaryings: [],
     });
-    const { positions, indices } = initVertices();
-    initVBO(
+    const indexBufferObject: IndexBufferObject = setupRectangleDomain({
       gl,
       program,
-      {
-        attributeName: "a_position",
-        stride: "xy".length,
-        usage: gl.STATIC_DRAW,
-      },
-      positions,
-    );
-    const indexBufferObject = new IndexBufferObject({
-      gl,
-      size: indices.length,
-      usage: gl.STATIC_DRAW,
+      attributeName: "a_position",
+      aspectRatio: 1,
     });
-    indexBufferObject.copyIntoDataStore({ srcData: indices });
     gl.uniform1f(
       gl.getUniformLocation(program, "u_domain_size"),
       domainSize.get(),
@@ -67,11 +46,9 @@ export class WebGLObjects {
     const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     gl.uniform2f(gl.getUniformLocation(program, "u_orig"), orig[0], orig[1]);
     gl.uniform2f(gl.getUniformLocation(program, "u_ref"), ref[0], ref[1]);
-    indexBufferObject.draw({
-      otherTasks: () => {
-        /* nothing else to do for this ibo */
-      },
-    });
+    indexBufferObject.bind({ gl });
+    indexBufferObject.draw({ gl, mode: gl.TRIANGLES });
+    indexBufferObject.unbind({ gl });
   }
 
   public handleResizeEvent() {

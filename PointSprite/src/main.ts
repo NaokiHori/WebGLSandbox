@@ -7,12 +7,12 @@ import { Timer } from "../../shared/util/timer";
 function setPositions(
   minLength: number,
   arg: number,
-  nitems: number,
+  numberOfVertices: number,
   positions: Float32Array,
 ) {
   const radius = 0.75 * minLength;
-  for (let i = 0; i < nitems; i++) {
-    const angle: number = (2 * Math.PI * i) / nitems + arg;
+  for (let i = 0; i < numberOfVertices; i++) {
+    const angle: number = (2 * Math.PI * i) / numberOfVertices + arg;
     positions[2 * i + 0] = radius * Math.cos(angle);
     positions[2 * i + 1] = radius * Math.sin(angle);
   }
@@ -22,8 +22,11 @@ window.addEventListener("load", () => {
   // main canvas
   const canvas = getElementUnwrap("canvas") as HTMLCanvasElement;
   // point sprite and buffer to store it
-  const nitems = 32;
-  const positions = new Float32Array(nitems * "xy".length);
+  const numberOfVertices = 32;
+  const numberOfItemsForEachVertex = "xy".length;
+  const positions = new Float32Array(
+    numberOfVertices * numberOfItemsForEachVertex,
+  );
   // NOTE: the shorter one of "screen width" "screen height" is fixed to this value
   const minLength = 16;
   // diameter
@@ -31,9 +34,10 @@ window.addEventListener("load", () => {
   // set-up webgl-related stuffs
   const webGLObjects = new WebGLObjects(
     canvas,
+    numberOfVertices,
+    numberOfItemsForEachVertex,
     minLength,
     pointSize,
-    positions,
   );
   const angle = new Angle(0.01);
   // performance checker
@@ -41,8 +45,13 @@ window.addEventListener("load", () => {
     /* nothing to do for now */
   });
   function draw() {
-    setPositions(minLength, angle.getCurrentValue(), nitems, positions);
-    webGLObjects.draw(nitems, positions);
+    setPositions(
+      minLength,
+      angle.getCurrentValue(),
+      numberOfVertices,
+      positions,
+    );
+    webGLObjects.draw(positions);
     angle.update();
     timer.update();
     requestAnimationFrame(draw);

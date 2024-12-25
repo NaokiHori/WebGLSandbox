@@ -1,6 +1,7 @@
 import { getContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { initVBO } from "../../shared/webgl/buffer";
+import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
+import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
 import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
 import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
@@ -59,8 +60,9 @@ export class WebGLObjects {
   private _gl: WebGL2RenderingContext;
   private _program: WebGLProgram;
   private _lorenzParamters: LorenzParameters;
-  private _aPosition1: WebGLBuffer;
-  private _aPosition2: WebGLBuffer;
+  private _positionsVertexAttribute: VertexAttribute;
+  private _aPosition1: VertexBufferObject;
+  private _aPosition2: VertexBufferObject;
   private _transformFeedback: WebGLTransformFeedback;
   // specifies the direction of transform feedback
   // true:  from aPosition1 to aPosition2
@@ -70,6 +72,7 @@ export class WebGLObjects {
 
   public constructor(
     canvas: HTMLCanvasElement,
+    numberOfVertices: number,
     positions: Float32Array,
     colors: Float32Array,
     cameraPositionZ: number,
@@ -91,37 +94,58 @@ export class WebGLObjects {
     });
     const transformFeedback = gl.createTransformFeedback();
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
-    const positionAttributeName = "a_position_old";
-    const aPosition1: WebGLBuffer = initVBO(
+    // attribute, which will be accessed by the two aPosition buffers
+    const positionsVertexAttribute = new VertexAttribute({
       gl,
       program,
-      {
-        attributeName: positionAttributeName,
-        stride: "xyz".length,
-        usage: gl.STREAM_COPY,
-      },
-      positions,
+      attributeName: "a_position_old",
+    });
+    // two buffers used as input / output, switched everytime
+    const aPosition1 = new VertexBufferObject({
+      gl,
+      numberOfVertices,
+      numberOfItemsForEachVertex: "xyz".length,
+      usage: gl.DYNAMIC_COPY,
+    });
+    const aPosition2 = new VertexBufferObject({
+      gl,
+      numberOfVertices,
+      numberOfItemsForEachVertex: "xyz".length,
+      usage: gl.DYNAMIC_COPY,
+    });
+    // send the initial positions to the first buffer
+    aPosition1.bind(gl);
+    positionsVertexAttribute.bindWithArrayBuffer(
+      gl,
+      program,
+      aPosition1.numberOfItemsForEachVertex,
+      aPosition1,
     );
-    const aPosition2: WebGLBuffer = initVBO(
-      gl,
-      program,
-      {
-        attributeName: positionAttributeName,
-        stride: "xyz".length,
-        usage: gl.STREAM_COPY,
-      },
-      positions,
-    );
-    initVBO(
-      gl,
-      program,
-      {
-        attributeName: "a_color",
-        stride: "rgb".length,
+    aPosition1.updateData(gl, positions);
+    aPosition1.unbind(gl);
+    (function () {
+      const numberOfItemsForEachVertex = "rgb".length;
+      const vbo = new VertexBufferObject({
+        gl,
+        numberOfVertices,
+        numberOfItemsForEachVertex,
         usage: gl.STATIC_DRAW,
-      },
-      colors,
-    );
+      });
+      const attribute = new VertexAttribute({
+        gl,
+        program,
+        attributeName: "a_color",
+      });
+      vbo.bind(gl);
+      attribute.bindWithArrayBuffer(
+        gl,
+        program,
+        numberOfItemsForEachVertex,
+        vbo,
+      );
+      vbo.updateData(gl, colors);
+      vbo.unbind(gl);
+    })();
     this._lorenzParamters = {
       sigma: new ControlParameters({
         mean: 40,
@@ -147,6 +171,7 @@ export class WebGLObjects {
     this._canvasAspectRatio = getCanvasAspectRatio(canvas);
     this._gl = gl;
     this._program = program;
+    this._positionsVertexAttribute = positionsVertexAttribute;
     this._aPosition1 = aPosition1;
     this._aPosition2 = aPosition2;
     this._transformFeedback = transformFeedback;
@@ -205,16 +230,9 @@ export class WebGLObjects {
     ];
   }
 
-  public draw(nitems: number, rotationVector: Vector3, rotationAngle: number) {
+  public draw(rotationVector: Vector3, rotationAngle: number) {
     const gl: WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
-    const transformFeedback: WebGLTransformFeedback = this._transformFeedback;
-    const buffer1: WebGLBuffer = this._isForward
-      ? this._aPosition1
-      : this._aPosition2;
-    const buffer2: WebGLBuffer = this._isForward
-      ? this._aPosition2
-      : this._aPosition1;
     const canvasAspectRatio = this._canvasAspectRatio;
     //
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -253,22 +271,29 @@ export class WebGLObjects {
       ),
     );
     //
+    const positionsVertexAttribute: VertexAttribute =
+      this._positionsVertexAttribute;
+    const transformFeedback: WebGLTransformFeedback = this._transformFeedback;
+    const buffer1: VertexBufferObject = this._isForward
+      ? this._aPosition1
+      : this._aPosition2;
+    const buffer2: VertexBufferObject = this._isForward
+      ? this._aPosition2
+      : this._aPosition1;
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer1);
-    gl.vertexAttribPointer(
-      gl.getAttribLocation(program, "a_position_old"),
-      "xyz".length,
-      gl.FLOAT,
-      false,
-      0,
-      0,
+    buffer1.bind(gl);
+    positionsVertexAttribute.bindWithArrayBuffer(
+      gl,
+      program,
+      buffer1.numberOfItemsForEachVertex,
+      buffer1,
     );
-    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, buffer2);
+    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, buffer2.buffer);
     gl.beginTransformFeedback(gl.POINTS);
-    gl.drawArrays(gl.POINTS, 0, nitems);
+    buffer1.draw(gl, gl.POINTS);
     gl.endTransformFeedback();
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    buffer1.unbind(gl);
     gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
     this._isForward = !this._isForward;
   }

@@ -1,26 +1,11 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { initVBO } from "../../shared/webgl/buffer";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
+import { setupTextureCoordinates } from "../../shared/webgl/setupTexture";
+import { setupRectangleDomain } from "../../shared/webgl/setupRectangleDomain";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 import sampleImage from "../sample.jpeg";
-
-function initVertices(aspectRatio: number): {
-  positions: Float32Array;
-  indices: Int16Array;
-} {
-  const positions = new Array<number[]>();
-  positions.push([-aspectRatio, -1]);
-  positions.push([+aspectRatio, -1]);
-  positions.push([-aspectRatio, +1]);
-  positions.push([+aspectRatio, +1]);
-  const indices = [0, 1, 2, 1, 3, 2];
-  return {
-    positions: new Float32Array(positions.flat()),
-    indices: new Int16Array(indices),
-  };
-}
 
 export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
@@ -39,23 +24,12 @@ export class WebGLObjects {
     imageHeight: number,
   ) {
     const imageAspectRatio: number = imageWidth / imageHeight;
-    const { positions, indices } = initVertices(imageAspectRatio);
-    initVBO(
+    const indexBufferObject: IndexBufferObject = setupRectangleDomain({
       gl,
       program,
-      {
-        attributeName: "a_position",
-        stride: "xy".length,
-        usage: gl.STATIC_DRAW,
-      },
-      positions,
-    );
-    const indexBufferObject = new IndexBufferObject({
-      gl,
-      size: indices.length,
-      usage: gl.STATIC_DRAW,
+      attributeName: "a_position",
+      aspectRatio: imageAspectRatio,
     });
-    indexBufferObject.copyIntoDataStore({ srcData: indices });
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
@@ -83,7 +57,7 @@ export class WebGLObjects {
       const image = new Image();
       const texture: WebGLTexture = gl.createTexture();
       image.src = sampleImage;
-      image.onload = () => {
+      image.addEventListener("load", () => {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(
           gl.TEXTURE_2D,
@@ -95,16 +69,11 @@ export class WebGLObjects {
         );
         gl.generateMipmap(gl.TEXTURE_2D);
         gl.bindTexture(gl.TEXTURE_2D, null);
-        initVBO(
+        setupTextureCoordinates({
           gl,
           program,
-          {
-            attributeName: "a_texture_coordinates",
-            stride: "xy".length,
-            usage: gl.STATIC_DRAW,
-          },
-          new Float32Array([0, 1, 1, 1, 0, 0, 1, 0]),
-        );
+          attributeName: "a_texture_coordinates",
+        });
         const imageWidth = image.width;
         const imageHeight = image.height;
         resolve(
@@ -117,7 +86,7 @@ export class WebGLObjects {
             imageHeight,
           ),
         );
-      };
+      });
     });
   }
 
@@ -144,11 +113,9 @@ export class WebGLObjects {
     const texture: WebGLTexture = this._texture;
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    indexBufferObject.draw({
-      otherTasks: () => {
-        /* nothing else to do for this ibo */
-      },
-    });
+    indexBufferObject.bind({ gl });
+    indexBufferObject.draw({ gl, mode: gl.TRIANGLES });
+    indexBufferObject.unbind({ gl });
     gl.bindTexture(gl.TEXTURE_2D, null);
   }
 }

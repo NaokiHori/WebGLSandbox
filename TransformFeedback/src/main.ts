@@ -122,6 +122,7 @@ window.addEventListener("load", () => {
   });
   const webGLObjects = new WebGLObjects(
     canvas,
+    nitems,
     positions,
     colors,
     cameraPositionZ.get(),
@@ -147,7 +148,7 @@ window.addEventListener("load", () => {
   const counter = new Counter();
   function draw() {
     const rotationAngle = 0.01 * counter.get();
-    webGLObjects.draw(nitems, rotationVector, rotationAngle);
+    webGLObjects.draw(rotationVector, rotationAngle);
     timer.update();
     counter.update();
     requestAnimationFrame(draw);

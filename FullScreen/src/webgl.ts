@@ -1,12 +1,14 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { initVBO } from "../../shared/webgl/buffer";
+import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
+import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 import vertexShaderSource2 from "../shader/vertexShader.es3.glsl?raw";
 import fragmentShaderSource2 from "../shader/fragmentShader.es3.glsl?raw";
 
-// prepare two triangles filling the entire screen
+// prepare two triangles filling the entire screen,
+//   on which a circle is drawn
 function initPositions(): number[][] {
   const positions = new Array<number[]>();
   positions.push([-1, -1]);
@@ -20,14 +22,18 @@ export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
   private _gl: WebGLContext;
   private _program: WebGLProgram;
-  private _numberOfVertices: number;
+  private _positionsVertexBufferObject: VertexBufferObject;
 
   public constructor(canvas: HTMLCanvasElement) {
+    // prepare a context
     const gl: WebGLContext = getContext(
       canvas,
       { preserveDrawingBuffer: false },
       true,
     );
+    // both WebGL1 and 2 are handled for this page
+    // compiler a shader program using the shader sources
+    //   which are loaded from the corresponding files
     const isGL2: boolean = gl instanceof WebGL2RenderingContext;
     const program: WebGLProgram = initProgram({
       gl,
@@ -37,21 +43,44 @@ export class WebGLObjects {
         : fragmentShaderSource,
       transformFeedbackVaryings: [],
     });
-    const positions: number[][] = initPositions();
-    initVBO(
-      gl,
-      program,
-      {
-        attributeName: "a_position",
-        stride: "xy".length,
-        usage: gl.STATIC_DRAW,
-      },
-      new Float32Array(positions.flat()),
-    );
+    const positionsVertexBufferObject: VertexBufferObject =
+      (function initializePositionsVertexBufferObject() {
+        // prepare two triangle elements filling the whole canvas element
+        const positions: number[][] = initPositions();
+        const numberOfVertices = positions.length;
+        const numberOfItemsForEachVertex = "xy".length;
+        // create a vertex buffer object: allocating buffer on GPU side
+        const vbo = new VertexBufferObject({
+          gl,
+          numberOfVertices,
+          numberOfItemsForEachVertex,
+          usage: gl.DYNAMIC_DRAW,
+        });
+        // active a vertex attribute
+        const attribute = new VertexAttribute({
+          gl,
+          program,
+          attributeName: "a_position",
+        });
+        // bind the buffer and attribute
+        vbo.bind(gl);
+        attribute.bindWithArrayBuffer(
+          gl,
+          program,
+          numberOfItemsForEachVertex,
+          vbo,
+        );
+        vbo.unbind(gl);
+        // push the vertex positions to GPU
+        vbo.bind(gl);
+        vbo.updateData(gl, new Float32Array(positions.flat()));
+        vbo.unbind(gl);
+        return vbo;
+      })();
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
-    this._numberOfVertices = positions.length;
+    this._positionsVertexBufferObject = positionsVertexBufferObject;
   }
 
   public handleResizeEvent() {
@@ -70,7 +99,8 @@ export class WebGLObjects {
 
   public draw() {
     const gl: WebGLContext = this._gl;
-    const numberOfVertices: number = this._numberOfVertices;
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, numberOfVertices);
+    const vbo: VertexBufferObject = this._positionsVertexBufferObject;
+    // the vertex data is unchanged, and just a draw call is invoked
+    vbo.draw(gl, gl.TRIANGLE_STRIP);
   }
 }

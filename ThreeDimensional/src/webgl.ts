@@ -1,22 +1,13 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { VBOConfig, initVBO } from "../../shared/webgl/buffer";
+import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
+import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
 import { initModel } from "./model";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
-
-function initColors(vertices: Vector3[]): number[][] {
-  const rgbs = [0.6627450980392157, 0.807843137254902, 0.9254901960784314].sort(
-    () => Math.random() - 0.5,
-  );
-  const colors = vertices.map(() => {
-    return rgbs.concat([1]);
-  });
-  return colors;
-}
 
 function getModelMatrix(
   rotateMatrix: Matrix44,
@@ -36,6 +27,43 @@ function getModelMatrix(
     offset,
   });
   return translateMatrix.matmul(rotateMatrix.matmul(scaleMatrix));
+}
+
+// do the following in one-piece
+// - create and allocate vbo
+// - create attribute
+// - bind them
+// - push data (because the vertex information will not be altered)
+function setupVertexBufferObjectAndAttribute({
+  gl,
+  program,
+  attributeName,
+  numberOfVertices,
+  numberOfItemsForEachVertex,
+  data,
+}: {
+  gl: WebGLRenderingContext | WebGL2RenderingContext;
+  program: WebGLProgram;
+  attributeName: string;
+  numberOfVertices: number;
+  numberOfItemsForEachVertex: number;
+  data: Float32Array;
+}) {
+  const vbo = new VertexBufferObject({
+    gl,
+    numberOfVertices,
+    numberOfItemsForEachVertex,
+    usage: gl.STATIC_DRAW,
+  });
+  const attribute = new VertexAttribute({
+    gl,
+    program,
+    attributeName,
+  });
+  vbo.bind(gl);
+  attribute.bindWithArrayBuffer(gl, program, numberOfItemsForEachVertex, vbo);
+  vbo.updateData(gl, data);
+  vbo.unbind(gl);
 }
 
 export class WebGLObjects {
@@ -66,55 +94,39 @@ export class WebGLObjects {
       transformFeedbackVaryings: [],
     });
     const modelData = initModel(modelParameter);
-    const colors = initColors(modelData.vertices);
-    initVBO(
+    const numberOfVertices = modelData.numberOfVertices;
+    setupVertexBufferObjectAndAttribute({
       gl,
       program,
-      {
-        attributeName: "a_position",
-        stride: "xyz".length,
-        usage: gl.STATIC_DRAW,
-      } satisfies VBOConfig,
-      new Float32Array(
-        modelData.vertices.flatMap((vertex: Vector3) => [
-          vertex.x,
-          vertex.y,
-          vertex.z,
-        ]),
-      ),
-    );
-    initVBO(
+      attributeName: "a_position",
+      numberOfVertices,
+      numberOfItemsForEachVertex: "xyz".length,
+      data: modelData.vertices,
+    });
+    setupVertexBufferObjectAndAttribute({
       gl,
       program,
-      {
-        attributeName: "a_normal",
-        stride: "xyz".length,
-        usage: gl.STATIC_DRAW,
-      } satisfies VBOConfig,
-      new Float32Array(
-        modelData.normals.flatMap((normal: Vector3) => [
-          normal.x,
-          normal.y,
-          normal.z,
-        ]),
-      ),
-    );
-    initVBO(
+      attributeName: "a_normal",
+      numberOfVertices,
+      numberOfItemsForEachVertex: "xyz".length,
+      data: modelData.normals,
+    });
+    setupVertexBufferObjectAndAttribute({
       gl,
       program,
-      {
-        attributeName: "a_color",
-        stride: "rgba".length,
-        usage: gl.STATIC_DRAW,
-      } satisfies VBOConfig,
-      new Float32Array(colors.flat()),
-    );
+      attributeName: "a_color",
+      numberOfVertices,
+      numberOfItemsForEachVertex: "rgba".length,
+      data: modelData.colors,
+    });
     const indexBufferObject = new IndexBufferObject({
       gl,
       size: modelData.indices.length,
       usage: gl.STATIC_DRAW,
     });
-    indexBufferObject.copyIntoDataStore({ srcData: modelData.indices });
+    indexBufferObject.bind({ gl });
+    indexBufferObject.updateData({ gl, data: modelData.indices });
+    indexBufferObject.unbind({ gl });
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
@@ -134,7 +146,6 @@ export class WebGLObjects {
   }
 
   public draw(rotationMatrix: Matrix44, aspectRatio: number) {
-    // reset canvas
     const gl: WebGLContext = this._gl;
     const program: WebGLProgram = this._program;
     const indexBufferObject: IndexBufferObject = this._indexBufferObject;
@@ -216,11 +227,9 @@ export class WebGLObjects {
       ),
     );
     // draw using index buffer object
-    indexBufferObject.draw({
-      otherTasks: () => {
-        /* nothing else to do for this ibo */
-      },
-    });
+    indexBufferObject.bind({ gl });
+    indexBufferObject.draw({ gl, mode: gl.TRIANGLES });
+    indexBufferObject.unbind({ gl });
   }
 
   public updateScale(scale: number) {
