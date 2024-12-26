@@ -6,14 +6,7 @@
 
 [![CoverImage](https://github.com/NaokiHori/WebGLSandbox/blob/main/cover_image.jpg)](https://youtube.com/shorts/ZipSsWJK-c8)
 
-Various simple scenarios utilizing [WebGL](https://www.khronos.org/webgl/) which are potentially useful for in-situ visualization of various numerical simulations, including
-
-- [Consistent size adjustments of the rendering scenes with HTML canvas elements](https://naokihori.github.io/WebGLSandbox/FullScreen/index.html)
-- [Point sprites](https://naokihori.github.io/WebGLSandbox/PointSprite/index.html)
-- [Shader art](https://naokihori.github.io/WebGLSandbox/JuliaSet/index.html)
-- [Texture](https://naokihori.github.io/WebGLSandbox/Scalar2D/index.html)
-- [Matrix manipulations and light, camera, model configurations](https://naokihori.github.io/WebGLSandbox/ThreeDimensional/index.html)
-- [Transform feedback](https://naokihori.github.io/WebGLSandbox/TransformFeedback/index.html)
+Various simple scenarios utilizing [WebGL](https://www.khronos.org/webgl/) which are potentially useful for real-time rendering of various numerical simulations on browsers.
 
 ## Quick Start
 

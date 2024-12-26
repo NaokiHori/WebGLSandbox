@@ -17,7 +17,11 @@ export default defineConfig({
         juliaSet: resolve(root, "JuliaSet", "index.html"),
         scalar2D: resolve(root, "Scalar2D", "index.html"),
         threeDimensional: resolve(root, "ThreeDimensional", "index.html"),
-        transformFeedback: resolve(root, "TransformFeedback", "index.html"),
+        repeatedTransformFeedback: resolve(
+          root,
+          "RepeatedTransformFeedback",
+          "index.html",
+        ),
       },
     },
   },
