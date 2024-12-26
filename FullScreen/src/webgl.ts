@@ -1,6 +1,6 @@
 import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
-import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
+import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
 import { setUniform } from "../../shared/webgl/uniform";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
@@ -12,7 +12,7 @@ export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
   private _gl: WebGLContext;
   private _program: WebGLProgram;
-  private _positionsVertexBufferObject: VertexBufferObject;
+  private _indexBufferObject: IndexBufferObject;
 
   public constructor(canvas: HTMLCanvasElement) {
     // prepare a context
@@ -35,8 +35,8 @@ export class WebGLObjects {
     });
     // prepare a rectangle domain with unitary aspect ratio
     const {
-      vertexBufferObject: positionsVertexBufferObject,
-    }: { vertexBufferObject: VertexBufferObject } = setupRectangleDomain({
+      indexBufferObject: indexBufferObject,
+    }: { indexBufferObject: IndexBufferObject } = setupRectangleDomain({
       gl,
       program,
       attributeName: "a_position",
@@ -46,7 +46,7 @@ export class WebGLObjects {
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
-    this._positionsVertexBufferObject = positionsVertexBufferObject;
+    this._indexBufferObject = indexBufferObject;
   }
 
   // adjust scale factors such that a circle fits the size of the canvas
@@ -56,7 +56,7 @@ export class WebGLObjects {
     const program: WebGLProgram = this._program;
     const w: number = canvas.width;
     const h: number = canvas.height;
-    const scale = (function computeScale() {
+    const scale: [number, number] = (function computeScale() {
       const aspectRatio: number = w / h;
       return aspectRatio < 1 ? [1, 1 * aspectRatio] : [1 / aspectRatio, 1];
     })();
@@ -72,10 +72,15 @@ export class WebGLObjects {
 
   public draw() {
     const gl: WebGLContext = this._gl;
-    const vbo: VertexBufferObject = this._positionsVertexBufferObject;
+    const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    // the vertex data is unchanged, and thus just a draw call is invoked;
-    //   namely no data transfer is needed
-    vbo.draw({ gl, mode: gl.TRIANGLE_STRIP });
+    // the vertex data is unchanged, and thus no data transfer is needed
+    // just a draw call is invoked
+    indexBufferObject.bindAndExecute({
+      gl,
+      callback: (boundBuffer: IndexBufferObject) => {
+        boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+      },
+    });
   }
 }

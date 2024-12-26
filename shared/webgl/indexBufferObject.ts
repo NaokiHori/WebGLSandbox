@@ -56,6 +56,13 @@ export class IndexBufferObject {
     gl: WebGLRenderingContext | WebGL2RenderingContext;
     data: Int16Array;
   }) {
+    const currentlyBoundBuffer: WebGLBuffer | null =
+      getCurrentlyBoundBuffer(gl);
+    if (currentlyBoundBuffer !== this._buffer) {
+      throw new Error(
+        `Trying to push data without a buffer bound or with another buffer bound`,
+      );
+    }
     const target: GLenum = this.target(gl);
     const size: GLsizeiptr = this._size;
     const usage: GLenum = this._usage;
@@ -74,6 +81,13 @@ export class IndexBufferObject {
     gl: WebGLRenderingContext | WebGL2RenderingContext;
     mode: GLenum;
   }) {
+    const currentlyBoundBuffer: WebGLBuffer | null =
+      getCurrentlyBoundBuffer(gl);
+    if (currentlyBoundBuffer !== this._buffer) {
+      throw new Error(
+        `Trying to draw data without a buffer bound or with another buffer bound`,
+      );
+    }
     const size: GLsizeiptr = this._size;
     gl.drawElements(mode, size, gl.UNSIGNED_SHORT, 0);
   }

@@ -63,6 +63,13 @@ export class VertexBufferObject {
     gl: WebGLRenderingContext | WebGL2RenderingContext;
     data: Float32Array;
   }) {
+    const currentlyBoundBuffer: WebGLBuffer | null =
+      getCurrentlyBoundBuffer(gl);
+    if (currentlyBoundBuffer !== this._buffer) {
+      throw new Error(
+        `Trying to push data without a buffer bound or with another buffer bound`,
+      );
+    }
     const expectedLength: number =
       this._numberOfVertices * this._numberOfItemsForEachVertex;
     if (data.length !== expectedLength) {
@@ -81,6 +88,13 @@ export class VertexBufferObject {
     gl: WebGLRenderingContext | WebGL2RenderingContext;
     mode: GLenum;
   }) {
+    const currentlyBoundBuffer: WebGLBuffer | null =
+      getCurrentlyBoundBuffer(gl);
+    if (currentlyBoundBuffer !== this._buffer) {
+      throw new Error(
+        `Trying to draw data without a buffer bound or with another buffer bound`,
+      );
+    }
     const numberOfVertices: number = this._numberOfVertices;
     gl.drawArrays(mode, 0, numberOfVertices);
   }
