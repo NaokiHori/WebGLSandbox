@@ -1,19 +1,24 @@
 import { getWebGL2RenderingContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
+import { Texture, TextureTarget } from "../../shared/webgl/texture";
 import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
 import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
 import { setUniform } from "../../shared/webgl/uniform";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 
+type TextureParam =
+  | WebGL2RenderingContext["LINEAR"]
+  | WebGL2RenderingContext["NEAREST"];
+
 export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
   private _gl: WebGL2RenderingContext;
   private _program: WebGLProgram;
   private _indexBufferObject: IndexBufferObject;
-  private _scalarTexture: WebGLTexture;
-  private _scalarTextureParam: GLint;
+  private _scalarTexture: Texture;
+  private _scalarTextureParam: TextureParam;
   private _nScalarField: number;
   private _scalarGridPoints: [number, number];
 
@@ -42,18 +47,25 @@ export class WebGLObjects {
         aspectRatio: scalarGridPoints[0] / scalarGridPoints[1],
       });
     // create and upload the scalar field as a texture
-    const scalarTexture: WebGLTexture = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, scalarTexture);
-    gl.texStorage3D(
-      gl.TEXTURE_2D_ARRAY,
-      1,
-      gl.R8,
-      scalarGridPoints[0],
-      scalarGridPoints[1],
-      nScalarField,
-    );
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+    const scalarTexture = new Texture({
+      gl,
+      program,
+      target: gl.TEXTURE_2D_ARRAY,
+      textureUnit: 0,
+    });
+    scalarTexture.bindAndExecute({
+      gl,
+      callback: (boundTexture: Texture) => {
+        gl.texStorage3D(
+          boundTexture.target,
+          1,
+          gl.R8,
+          scalarGridPoints[0],
+          scalarGridPoints[1],
+          nScalarField,
+        );
+      },
+    });
     setupTextureCoordinates({
       gl,
       program,
@@ -103,8 +115,8 @@ export class WebGLObjects {
 
   public handleChangeEvent() {
     const gl: WebGL2RenderingContext = this._gl;
-    const scalarTextureParam: GLint = this._scalarTextureParam;
-    const newScalarTextureParam: GLint =
+    const scalarTextureParam: TextureParam = this._scalarTextureParam;
+    const newScalarTextureParam: TextureParam =
       scalarTextureParam === gl.NEAREST ? gl.LINEAR : gl.NEAREST;
     this.updateTextureParam(newScalarTextureParam);
   }
@@ -112,52 +124,59 @@ export class WebGLObjects {
   public draw(scalarField: Uint8Array) {
     const gl: WebGL2RenderingContext = this._gl;
     const indexBufferObject: IndexBufferObject = this._indexBufferObject;
-    const scalarTexture: WebGLTexture = this._scalarTexture;
+    const scalarTexture: Texture = this._scalarTexture;
     const nScalarField: number = this._nScalarField;
     const scalarGridPoints: [number, number] = this._scalarGridPoints;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, scalarTexture);
-    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
-    gl.texSubImage3D(
-      gl.TEXTURE_2D_ARRAY,
-      0,
-      0,
-      0,
-      0,
-      scalarGridPoints[0],
-      scalarGridPoints[1],
-      nScalarField,
-      gl.RED,
-      gl.UNSIGNED_BYTE,
-      scalarField,
-    );
-    indexBufferObject.bindAndExecute({
+    scalarTexture.bindAndExecute({
       gl,
-      callback: (boundBuffer: IndexBufferObject) => {
-        boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+      callback: (boundTexture: Texture) => {
+        const textureTarget: TextureTarget = boundTexture.target;
+        gl.generateMipmap(textureTarget);
+        gl.texSubImage3D(
+          textureTarget,
+          0,
+          0,
+          0,
+          0,
+          scalarGridPoints[0],
+          scalarGridPoints[1],
+          nScalarField,
+          gl.RED,
+          gl.UNSIGNED_BYTE,
+          scalarField,
+        );
+        indexBufferObject.bindAndExecute({
+          gl,
+          callback: (boundBuffer: IndexBufferObject) => {
+            boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+          },
+        });
       },
     });
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
   }
 
-  private updateTextureParam(newScalarTextureParam: GLint) {
+  private updateTextureParam(newScalarTextureParam: TextureParam) {
     const gl: WebGL2RenderingContext = this._gl;
-    const scalarTexture: WebGLTexture = this._scalarTexture;
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, scalarTexture);
-    gl.texParameteri(
-      gl.TEXTURE_2D_ARRAY,
-      gl.TEXTURE_MIN_FILTER,
-      newScalarTextureParam,
-    );
-    gl.texParameteri(
-      gl.TEXTURE_2D_ARRAY,
-      gl.TEXTURE_MAG_FILTER,
-      newScalarTextureParam,
-    );
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+    const scalarTexture: Texture = this._scalarTexture;
+    scalarTexture.bindAndExecute({
+      gl,
+      callback: (boundTexture: Texture) => {
+        const textureTarget: TextureTarget = boundTexture.target;
+        gl.texParameteri(
+          textureTarget,
+          gl.TEXTURE_MIN_FILTER,
+          newScalarTextureParam,
+        );
+        gl.texParameteri(
+          textureTarget,
+          gl.TEXTURE_MAG_FILTER,
+          newScalarTextureParam,
+        );
+        gl.texParameteri(textureTarget, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(textureTarget, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      },
+    });
     this._scalarTextureParam = newScalarTextureParam;
   }
 }

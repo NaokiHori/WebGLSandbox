@@ -1,6 +1,7 @@
 import { getWebGL2RenderingContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
+import { Texture, TextureTarget } from "../../shared/webgl/texture";
 import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
 import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
 import { setUniform } from "../../shared/webgl/uniform";
@@ -13,14 +14,14 @@ export class WebGLObjects {
   private _gl: WebGL2RenderingContext;
   private _program: WebGLProgram;
   private _indexBufferObject: IndexBufferObject;
-  private _texture: WebGLTexture;
+  private _texture: Texture;
   private _imageAspectRatio: number;
 
   private constructor(
     canvas: HTMLCanvasElement,
     gl: WebGL2RenderingContext,
     program: WebGLProgram,
-    texture: WebGLTexture,
+    texture: Texture,
     imageWidth: number,
     imageHeight: number,
   ) {
@@ -54,30 +55,30 @@ export class WebGLObjects {
         fragmentShaderSource,
         transformFeedbackVaryings: [],
       });
-      // texture configuration
-      gl.activeTexture(gl.TEXTURE0);
-      setUniform({
-        gl,
-        program,
-        dataType: "INT32",
-        uniformName: "u_texture",
-        data: [0],
-      });
       const image = new Image();
-      const texture: WebGLTexture = gl.createTexture();
+      const texture = new Texture({
+        gl,
+        target: gl.TEXTURE_2D,
+        program,
+        textureUnit: 0,
+      });
       image.src = sampleImage;
       image.addEventListener("load", () => {
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(
-          gl.TEXTURE_2D,
-          0,
-          gl.RGBA,
-          gl.RGBA,
-          gl.UNSIGNED_BYTE,
-          image,
-        );
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.bindTexture(gl.TEXTURE_2D, null);
+        texture.bindAndExecute({
+          gl,
+          callback: (boundTexture: Texture) => {
+            const textureTarget: TextureTarget = boundTexture.target;
+            gl.texImage2D(
+              textureTarget,
+              0,
+              gl.RGBA,
+              gl.RGBA,
+              gl.UNSIGNED_BYTE,
+              image,
+            );
+            gl.generateMipmap(textureTarget);
+          },
+        });
         setupTextureCoordinates({
           gl,
           program,
@@ -125,15 +126,18 @@ export class WebGLObjects {
   public draw() {
     const gl: WebGL2RenderingContext = this._gl;
     const indexBufferObject: IndexBufferObject = this._indexBufferObject;
-    const texture: WebGLTexture = this._texture;
+    const texture: Texture = this._texture;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    indexBufferObject.bindAndExecute({
+    texture.bindAndExecute({
       gl,
-      callback: (boundBuffer: IndexBufferObject) => {
-        boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+      callback: () => {
+        indexBufferObject.bindAndExecute({
+          gl,
+          callback: (boundBuffer: IndexBufferObject) => {
+            boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+          },
+        });
       },
     });
-    gl.bindTexture(gl.TEXTURE_2D, null);
   }
 }
