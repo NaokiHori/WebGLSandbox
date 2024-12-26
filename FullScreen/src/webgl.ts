@@ -1,4 +1,4 @@
-import { getContext, WebGLContext } from "../../shared/webgl/context";
+import { getContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
@@ -10,13 +10,13 @@ import fragmentShaderSource2 from "../shader/fragmentShader.es3.glsl?raw";
 
 export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
-  private _gl: WebGLContext;
+  private _gl: WebGLRenderingContext | WebGL2RenderingContext;
   private _program: WebGLProgram;
   private _indexBufferObject: IndexBufferObject;
 
   public constructor(canvas: HTMLCanvasElement) {
     // prepare a context
-    const gl: WebGLContext = getContext(
+    const gl: WebGLRenderingContext | WebGL2RenderingContext = getContext(
       canvas,
       { preserveDrawingBuffer: false },
       true,
@@ -52,7 +52,7 @@ export class WebGLObjects {
   // adjust scale factors such that a circle fits the size of the canvas
   public handleResizeEvent() {
     const canvas: HTMLCanvasElement = this._canvas;
-    const gl: WebGLContext = this._gl;
+    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
     const w: number = canvas.width;
     const h: number = canvas.height;
@@ -71,7 +71,7 @@ export class WebGLObjects {
   }
 
   public draw() {
-    const gl: WebGLContext = this._gl;
+    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
     const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // the vertex data is unchanged, and thus no data transfer is needed

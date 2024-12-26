@@ -1,4 +1,4 @@
-import { getContext, WebGLContext } from "../../shared/webgl/context";
+import { getContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
@@ -78,7 +78,7 @@ export class WebGLObjects {
 
   public handleResizeEvent() {
     const canvas: HTMLCanvasElement = this._canvas;
-    const gl: WebGLContext = this._gl;
+    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
     const scalarGridPoints: [number, number] = this._scalarGridPoints;
     const scalarAspectRatio: number = scalarGridPoints[0] / scalarGridPoints[1];

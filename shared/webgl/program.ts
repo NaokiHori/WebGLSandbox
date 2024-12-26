@@ -1,8 +1,8 @@
-import { WebGLContext } from "./context";
-
 function initShader(
-  gl: WebGLContext,
-  type: WebGLContext["FRAGMENT_SHADER"] | WebGLContext["VERTEX_SHADER"],
+  gl: WebGLRenderingContext | WebGL2RenderingContext,
+  type:
+    | (WebGLRenderingContext | WebGL2RenderingContext)["FRAGMENT_SHADER"]
+    | (WebGLRenderingContext | WebGL2RenderingContext)["VERTEX_SHADER"],
   source: string,
 ): WebGLShader {
   // creates a shader of the given type
@@ -28,7 +28,7 @@ export function initProgram({
   fragmentShaderSource,
   transformFeedbackVaryings,
 }: {
-  gl: WebGLContext;
+  gl: WebGLRenderingContext | WebGL2RenderingContext;
   vertexShaderSource: string;
   fragmentShaderSource: string;
   transformFeedbackVaryings: string[];

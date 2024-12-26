@@ -1,4 +1,4 @@
-import { getContext, WebGLContext } from "../../shared/webgl/context";
+import { getContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
 import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
@@ -8,7 +8,7 @@ import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 
 export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
-  private _gl: WebGLContext;
+  private _gl: WebGLRenderingContext | WebGL2RenderingContext;
   private _program: WebGLProgram;
   private _minLength: number;
   private _pointSize: number;
@@ -21,7 +21,7 @@ export class WebGLObjects {
     minLength: number,
     pointSize: number,
   ) {
-    const gl: WebGLContext = getContext(
+    const gl: WebGLRenderingContext | WebGL2RenderingContext = getContext(
       canvas,
       { preserveDrawingBuffer: false },
       false,
@@ -68,7 +68,7 @@ export class WebGLObjects {
 
   public handleResizeEvent() {
     const canvas: HTMLCanvasElement = this._canvas;
-    const gl: WebGLContext = this._gl;
+    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
     const minLength: number = this._minLength;
     const pointSize: number = this._pointSize;
@@ -115,7 +115,7 @@ export class WebGLObjects {
   }
 
   public draw(positions: Float32Array) {
-    const gl: WebGLContext = this._gl;
+    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
     const vbo: VertexBufferObject = this._positionsVertexBufferObject;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     vbo.bindAndExecute({

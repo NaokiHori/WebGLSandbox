@@ -1,10 +1,8 @@
-export type WebGLContext = WebGLRenderingContext | WebGL2RenderingContext;
-
 export function getContext(
   canvas: HTMLCanvasElement,
   contextAttributes: { preserveDrawingBuffer: boolean },
   acceptGL: boolean,
-): WebGLContext {
+): WebGLRenderingContext | WebGL2RenderingContext {
   const gl2: WebGL2RenderingContext | null = canvas.getContext("webgl2", {
     ...contextAttributes,
   });
@@ -14,7 +12,7 @@ export function getContext(
   }
   console.log("WebGL2RenderingContext is not available");
   if (acceptGL) {
-    const gl: WebGLContext | null = canvas.getContext("webgl", {
+    const gl: WebGLRenderingContext | null = canvas.getContext("webgl", {
       ...contextAttributes,
     });
     if (null !== gl) {
