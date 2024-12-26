@@ -1,18 +1,18 @@
 import { getElementUnwrap, syncCanvasSize } from "../../shared/dom";
 import { WebGLObjects } from "./webgl";
-import { Angle } from "./angle";
+import { ClampedValue } from "../../shared/util/clampedValue";
 import { Timer } from "../../shared/util/timer";
 
 // create a point sprite
 function setPositions(
   minLength: number,
-  arg: number,
+  angleOffset: number,
   numberOfVertices: number,
   positions: Float32Array,
 ) {
   const radius = 0.75 * minLength;
   for (let i = 0; i < numberOfVertices; i++) {
-    const angle: number = (2 * Math.PI * i) / numberOfVertices + arg;
+    const angle: number = (2 * Math.PI * i) / numberOfVertices + angleOffset;
     positions[2 * i + 0] = radius * Math.cos(angle);
     positions[2 * i + 1] = radius * Math.sin(angle);
   }
@@ -39,20 +39,20 @@ window.addEventListener("load", () => {
     minLength,
     pointSize,
   );
-  const angle = new Angle(0.01);
+  const angleOffset = new ClampedValue({
+    isPeriodic: true,
+    minValue: 0,
+    maxValue: 2 * Math.PI,
+    defaultValue: 0.01,
+  });
   // performance checker
   const timer = new Timer(1000, () => {
     /* nothing to do for now */
   });
   function draw() {
-    setPositions(
-      minLength,
-      angle.getCurrentValue(),
-      numberOfVertices,
-      positions,
-    );
+    setPositions(minLength, angleOffset.get(), numberOfVertices, positions);
     webGLObjects.draw(positions);
-    angle.update();
+    angleOffset.update(angleOffset.get() + 0.01);
     timer.update();
     requestAnimationFrame(draw);
   }

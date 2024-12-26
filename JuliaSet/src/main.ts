@@ -66,6 +66,7 @@ window.addEventListener("load", () => {
   const canvas = getElementUnwrap("canvas") as HTMLCanvasElement;
   // set-up webgl-related stuffs
   const domainSize = new ClampedValue({
+    isPeriodic: false,
     minValue: 1,
     maxValue: 5,
     defaultValue: 2,
@@ -96,6 +97,7 @@ window.addEventListener("load", () => {
     },
   });
   const timeStepFactor = new ClampedValue({
+    isPeriodic: false,
     minValue: 0.1,
     maxValue: 10,
     defaultValue: 1,

@@ -116,6 +116,7 @@ window.addEventListener("load", () => {
   }: { positions: Float32Array; colors: Float32Array } = initParticles(nitems);
   // set-up webgl-related stuffs
   const cameraPositionZ = new ClampedValue({
+    isPeriodic: false,
     minValue: 1,
     maxValue: 10,
     defaultValue: 6,
