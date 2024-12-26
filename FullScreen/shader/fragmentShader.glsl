@@ -6,11 +6,10 @@ varying vec2 v_position;
 
 void main(void) {
   float radius = 1.;
-  vec2 orig = v_position / u_scale;
-  if (radius < length(orig)) {
+  if (radius < length(v_position)) {
     gl_FragColor = vec4(0., 0., 0., 1.);
   } else {
-    gl_FragColor = vec4(0.5 + 0.5 * orig.x, 0.5 + 0.5 * orig.y, 0.5 - 0.5 * orig.x, 1.);
+    gl_FragColor = vec4(0.5 + 0.5 * v_position.x, 0.5 + 0.5 * v_position.y, 0.5 - 0.5 * v_position.x, 1.);
   }
 }
 
