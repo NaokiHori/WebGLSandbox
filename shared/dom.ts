@@ -13,3 +13,7 @@ export function getElementUnwrap(id: string): unknown {
   }
   return elem;
 }
+
+export function createElement({ tagName }: { tagName: string }): Element {
+  return document.createElement(tagName);
+}

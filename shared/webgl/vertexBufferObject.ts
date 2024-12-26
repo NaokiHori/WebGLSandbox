@@ -3,10 +3,6 @@ export class VertexBufferObject {
   private _numberOfVertices: number;
   private _numberOfItemsForEachVertex: number;
 
-  private target(gl: WebGLRenderingContext | WebGL2RenderingContext): GLenum {
-    return gl.ARRAY_BUFFER;
-  }
-
   public constructor({
     gl,
     numberOfVertices,
@@ -34,6 +30,10 @@ export class VertexBufferObject {
     });
     this._numberOfVertices = numberOfVertices;
     this._numberOfItemsForEachVertex = numberOfItemsForEachVertex;
+  }
+
+  public target(gl: WebGLRenderingContext | WebGL2RenderingContext): GLenum {
+    return gl.ARRAY_BUFFER;
   }
 
   // bind this buffer to perform operations on it
@@ -88,13 +88,6 @@ export class VertexBufferObject {
     gl: WebGLRenderingContext | WebGL2RenderingContext;
     mode: GLenum;
   }) {
-    const currentlyBoundBuffer: WebGLBuffer | null =
-      getCurrentlyBoundBuffer(gl);
-    if (currentlyBoundBuffer !== this._buffer) {
-      throw new Error(
-        `Trying to draw data without a buffer bound or with another buffer bound`,
-      );
-    }
     const numberOfVertices: number = this._numberOfVertices;
     gl.drawArrays(mode, 0, numberOfVertices);
   }
