@@ -129,14 +129,14 @@ window.addEventListener("load", () => {
   });
   function draw() {
     const currentTimeStepFactor: number = (function getCurrentTimeStepFactor() {
-      let currentTimeStepFactor = timeStepFactor.get();
+      let currentValue = timeStepFactor.get();
       if (isPaused.getCurrentState()) {
         return 0;
       }
       if (!movesForwardInTime.getCurrentState()) {
-        currentTimeStepFactor *= -1;
+        currentValue *= -1;
       }
-      return currentTimeStepFactor;
+      return currentValue;
     })();
     lissajousRef.update(currentTimeStepFactor);
     lissajousOrig.update(currentTimeStepFactor);

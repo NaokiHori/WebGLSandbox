@@ -131,9 +131,12 @@ export class WebGLObjects {
       gl.UNSIGNED_BYTE,
       scalarField,
     );
-    indexBufferObject.bind({ gl });
-    indexBufferObject.draw({ gl, mode: gl.TRIANGLES });
-    indexBufferObject.unbind({ gl });
+    indexBufferObject.bindAndExecute({
+      gl,
+      callback: (boundBuffer: IndexBufferObject) => {
+        boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+      },
+    });
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
   }
 

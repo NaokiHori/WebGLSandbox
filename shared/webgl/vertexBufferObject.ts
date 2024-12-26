@@ -26,14 +26,25 @@ export class VertexBufferObject {
       Float32Array.BYTES_PER_ELEMENT *
       numberOfVertices *
       numberOfItemsForEachVertex;
-    this.bind({ gl });
-    gl.bufferData(target, size, usage);
-    this.unbind({ gl });
+    this.bindAndExecute({
+      gl,
+      callback: () => {
+        gl.bufferData(target, size, usage);
+      },
+    });
     this._numberOfVertices = numberOfVertices;
     this._numberOfItemsForEachVertex = numberOfItemsForEachVertex;
   }
 
-  public bind({ gl }: { gl: WebGLRenderingContext | WebGL2RenderingContext }) {
+  // bind this buffer to perform operations on it
+  // the buffer is unbound before return
+  public bindAndExecute({
+    gl,
+    callback,
+  }: {
+    gl: WebGLRenderingContext | WebGL2RenderingContext;
+    callback: (vertexBufferObject: VertexBufferObject) => void;
+  }) {
     const currentlyBoundBuffer: WebGLBuffer | null =
       getCurrentlyBoundBuffer(gl);
     if (currentlyBoundBuffer !== null) {
@@ -41,19 +52,7 @@ export class VertexBufferObject {
     }
     const target: GLenum = this.target(gl);
     gl.bindBuffer(target, this._buffer);
-  }
-
-  public unbind({
-    gl,
-  }: {
-    gl: WebGLRenderingContext | WebGL2RenderingContext;
-  }) {
-    const currentlyBoundBuffer: WebGLBuffer | null =
-      getCurrentlyBoundBuffer(gl);
-    if (currentlyBoundBuffer !== this._buffer) {
-      throw new Error(`Trying to unbind a buffer which is not bound`);
-    }
-    const target: GLenum = this.target(gl);
+    callback(this);
     gl.bindBuffer(target, null);
   }
 

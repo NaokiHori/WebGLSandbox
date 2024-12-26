@@ -19,14 +19,25 @@ export class IndexBufferObject {
     const target: GLenum = this.target(gl);
     const buffer: WebGLBuffer = gl.createBuffer();
     this._buffer = buffer;
-    this.bind({ gl });
-    gl.bufferData(target, size, usage);
-    this.unbind({ gl });
+    this.bindAndExecute({
+      gl,
+      callback: () => {
+        gl.bufferData(target, size, usage);
+      },
+    });
     this._size = size;
     this._usage = usage;
   }
 
-  public bind({ gl }: { gl: WebGLRenderingContext | WebGL2RenderingContext }) {
+  // bind this buffer to perform operations on it
+  // the buffer is unbound before return
+  public bindAndExecute({
+    gl,
+    callback,
+  }: {
+    gl: WebGLRenderingContext | WebGL2RenderingContext;
+    callback: (indexBufferObject: IndexBufferObject) => void;
+  }) {
     const currentlyBoundBuffer: WebGLBuffer | null =
       getCurrentlyBoundBuffer(gl);
     if (currentlyBoundBuffer !== null) {
@@ -34,19 +45,7 @@ export class IndexBufferObject {
     }
     const target: GLenum = this.target(gl);
     gl.bindBuffer(target, this._buffer);
-  }
-
-  public unbind({
-    gl,
-  }: {
-    gl: WebGLRenderingContext | WebGL2RenderingContext;
-  }) {
-    const currentlyBoundBuffer: WebGLBuffer | null =
-      getCurrentlyBoundBuffer(gl);
-    if (currentlyBoundBuffer !== this._buffer) {
-      throw new Error(`Trying to unbind a buffer which is not bound`);
-    }
-    const target: GLenum = this.target(gl);
+    callback(this);
     gl.bindBuffer(target, null);
   }
 

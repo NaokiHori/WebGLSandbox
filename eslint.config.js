@@ -16,6 +16,19 @@ export default tseslint.config(
     },
   },
   {
+    rules: {
+      "no-shadow": [
+        "error",
+        {
+          builtinGlobals: false,
+          hoist: "functions",
+          allow: [],
+          ignoreOnInitialization: false,
+        },
+      ],
+    },
+  },
+  {
     ignores: ["node_modules/", "dist/", "eslint.config.js", "vite.config.js"],
   },
 );

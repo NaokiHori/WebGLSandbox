@@ -45,14 +45,17 @@ export class WebGLObjects {
           program,
           attributeName: "a_position",
         });
-        vbo.bind({ gl });
-        attribute.bindWithArrayBuffer({
+        vbo.bindAndExecute({
           gl,
-          program,
-          size: numberOfItemsForEachVertex,
-          vertexBufferObject: vbo,
+          callback: (boundBuffer: VertexBufferObject) => {
+            attribute.bindWithArrayBuffer({
+              gl,
+              program,
+              size: numberOfItemsForEachVertex,
+              vertexBufferObject: boundBuffer,
+            });
+          },
         });
-        vbo.unbind({ gl });
         return vbo;
       })();
     this._canvas = canvas;
@@ -72,32 +75,8 @@ export class WebGLObjects {
     const w: number = canvas.width;
     const h: number = canvas.height;
     const aspectRatio: number = w / h;
-    const scale = (function computeScale() {
-      // convert one of the axes, from [- minLength : + minLength] to [- 1 : + 1]
-      const scale =
-        aspectRatio < 1 ? [1, 1 * aspectRatio] : [1 / aspectRatio, 1];
-      return [scale[0] / minLength, scale[1] / minLength];
-    })();
+    const scale: [number, number] = computeScale(aspectRatio, minLength);
     const pixelsPerUnitLength = aspectRatio < 1 ? w / minLength : h / minLength;
-    const pointSizeInPixels: number = (function computePointSizeInPixels() {
-      const availableRange: Float32Array = gl.getParameter(
-        gl.ALIASED_POINT_SIZE_RANGE,
-      ) as Float32Array;
-      let pointSizeInPixels = pointSize * pixelsPerUnitLength;
-      if (pointSizeInPixels < availableRange[0]) {
-        console.log(
-          `Specified pointSizeInPixels is too small: ${availableRange[0].toString()}`,
-        );
-        pointSizeInPixels = availableRange[0];
-      }
-      if (availableRange[1] < pointSizeInPixels) {
-        console.log(
-          `Specified pointSizeInPixels is too large: ${availableRange[1].toString()}`,
-        );
-        pointSizeInPixels = availableRange[1];
-      }
-      return pointSizeInPixels;
-    })();
     gl.viewport(0, 0, w, h);
     setUniform({
       gl,
@@ -111,7 +90,27 @@ export class WebGLObjects {
       program,
       dataType: "FLOAT32",
       uniformName: "u_point_size",
-      data: [pointSizeInPixels],
+      data: [
+        (function computePointSizeInPixels() {
+          const availableRange: Float32Array = gl.getParameter(
+            gl.ALIASED_POINT_SIZE_RANGE,
+          ) as Float32Array;
+          let pointSizeInPixels = pointSize * pixelsPerUnitLength;
+          if (pointSizeInPixels < availableRange[0]) {
+            console.log(
+              `Specified pointSizeInPixels is too small: ${availableRange[0].toString()}`,
+            );
+            pointSizeInPixels = availableRange[0];
+          }
+          if (availableRange[1] < pointSizeInPixels) {
+            console.log(
+              `Specified pointSizeInPixels is too large: ${availableRange[1].toString()}`,
+            );
+            pointSizeInPixels = availableRange[1];
+          }
+          return pointSizeInPixels;
+        })(),
+      ],
     });
   }
 
@@ -119,9 +118,21 @@ export class WebGLObjects {
     const gl: WebGLContext = this._gl;
     const vbo: VertexBufferObject = this._positionsVertexBufferObject;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    vbo.bind({ gl });
-    vbo.updateData({ gl, data: positions });
-    vbo.draw({ gl, mode: gl.POINTS });
-    vbo.unbind({ gl });
+    vbo.bindAndExecute({
+      gl,
+      callback: (boundBuffer: VertexBufferObject) => {
+        boundBuffer.updateData({ gl, data: positions });
+        boundBuffer.draw({ gl, mode: gl.POINTS });
+      },
+    });
   }
+}
+
+function computeScale(
+  aspectRatio: number,
+  minLength: number,
+): [number, number] {
+  // convert one of the axes, from [- minLength : + minLength] to [- 1 : + 1]
+  const scale = aspectRatio < 1 ? [1, 1 * aspectRatio] : [1 / aspectRatio, 1];
+  return [scale[0] / minLength, scale[1] / minLength];
 }

@@ -87,9 +87,12 @@ export class WebGLObjects {
       size: modelData.indices.length,
       usage: gl.STATIC_DRAW,
     });
-    indexBufferObject.bind({ gl });
-    indexBufferObject.updateData({ gl, data: modelData.indices });
-    indexBufferObject.unbind({ gl });
+    indexBufferObject.bindAndExecute({
+      gl,
+      callback: (boundBuffer: IndexBufferObject) => {
+        boundBuffer.updateData({ gl, data: modelData.indices });
+      },
+    });
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
@@ -143,7 +146,7 @@ export class WebGLObjects {
       near: cameraPosition.norm(),
       far: cameraPosition.norm() * 2,
     });
-    (function initializeCamera(program: WebGLProgram) {
+    (function initializeCamera() {
       const lineOfSight: Vector3 = cameraPosition.normalize().multiply(-1);
       setUniform({
         gl,
@@ -152,9 +155,9 @@ export class WebGLObjects {
         uniformName: "u_line_of_sight",
         data: lineOfSight.flat(),
       });
-    })(program);
+    })();
     // light configurations
-    (function initializeLight(program: WebGLProgram) {
+    (function initializeLight() {
       const light = new Vector3({
         x: 2,
         y: 2,
@@ -167,7 +170,7 @@ export class WebGLObjects {
         uniformName: "u_diffuse_light",
         data: light.flat(),
       });
-    })(program);
+    })();
     setUniform({
       gl,
       program,
@@ -208,9 +211,12 @@ export class WebGLObjects {
         .flat(),
     });
     // draw using index buffer object
-    indexBufferObject.bind({ gl });
-    indexBufferObject.draw({ gl, mode: gl.TRIANGLES });
-    indexBufferObject.unbind({ gl });
+    indexBufferObject.bindAndExecute({
+      gl,
+      callback: (boundBuffer: IndexBufferObject) => {
+        boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+      },
+    });
   }
 
   public updateScale(scale: number) {

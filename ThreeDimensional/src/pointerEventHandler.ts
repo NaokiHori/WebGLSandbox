@@ -31,7 +31,7 @@ export class PointerEventHandler {
   public constructor(
     canvas: HTMLCanvasElement,
     webGLObjects: WebGLObjects,
-    getAspectRatio: (canvas: HTMLCanvasElement) => number,
+    getAspectRatio: (c: HTMLCanvasElement) => number,
   ) {
     this._isPointerDown = false;
     this._pointerPosition = {

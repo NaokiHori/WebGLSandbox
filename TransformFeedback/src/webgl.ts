@@ -116,15 +116,18 @@ export class WebGLObjects {
       usage: gl.DYNAMIC_COPY,
     });
     // send the initial positions to the first buffer
-    aPosition1.bind({ gl });
-    positionsVertexAttribute.bindWithArrayBuffer({
+    aPosition1.bindAndExecute({
       gl,
-      program,
-      size: aPosition1.numberOfItemsForEachVertex,
-      vertexBufferObject: aPosition1,
+      callback: (boundBuffer: VertexBufferObject) => {
+        positionsVertexAttribute.bindWithArrayBuffer({
+          gl,
+          program,
+          size: boundBuffer.numberOfItemsForEachVertex,
+          vertexBufferObject: boundBuffer,
+        });
+        boundBuffer.updateData({ gl, data: positions });
+      },
     });
-    aPosition1.updateData({ gl, data: positions });
-    aPosition1.unbind({ gl });
     setupStaticallyDrawnData({
       gl,
       program,
@@ -282,19 +285,22 @@ export class WebGLObjects {
       ? this._aPosition2
       : this._aPosition1;
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
-    buffer1.bind({ gl });
-    positionsVertexAttribute.bindWithArrayBuffer({
+    buffer1.bindAndExecute({
       gl,
-      program,
-      size: buffer1.numberOfItemsForEachVertex,
-      vertexBufferObject: buffer1,
+      callback: (boundBuffer: VertexBufferObject) => {
+        positionsVertexAttribute.bindWithArrayBuffer({
+          gl,
+          program,
+          size: boundBuffer.numberOfItemsForEachVertex,
+          vertexBufferObject: boundBuffer,
+        });
+        gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, buffer2.buffer);
+        gl.beginTransformFeedback(gl.POINTS);
+        boundBuffer.draw({ gl, mode: gl.POINTS });
+        gl.endTransformFeedback();
+        gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
+      },
     });
-    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, buffer2.buffer);
-    gl.beginTransformFeedback(gl.POINTS);
-    buffer1.draw({ gl, mode: gl.POINTS });
-    gl.endTransformFeedback();
-    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
-    buffer1.unbind({ gl });
     gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
     this._isForward = !this._isForward;
   }

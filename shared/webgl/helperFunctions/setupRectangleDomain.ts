@@ -37,8 +37,11 @@ export function setupRectangleDomain({
     size: indices.length,
     usage: gl.STATIC_DRAW,
   });
-  ibo.bind({ gl });
-  ibo.updateData({ gl, data: new Int16Array(indices) });
-  ibo.unbind({ gl });
+  ibo.bindAndExecute({
+    gl,
+    callback: (boundBuffer: IndexBufferObject) => {
+      boundBuffer.updateData({ gl, data: new Int16Array(indices) });
+    },
+  });
   return { vertexBufferObject: vbo, indexBufferObject: ibo };
 }

@@ -163,13 +163,15 @@ export class Matrix44 {
     // forward sweep
     for (let i = 0; i < 4; i++) {
       // normalize i-th row
-      const f = 1 / arr[i * 4 + i];
-      arr[i * 4 + i] = 1;
-      for (let j = i + 1; j < 4; j++) {
-        arr[i * 4 + j] *= f;
-      }
-      for (let j = 0; j < i + 1; j++) {
-        inv[i * 4 + j] *= f;
+      {
+        const f = 1 / arr[i * 4 + i];
+        arr[i * 4 + i] = 1;
+        for (let j = i + 1; j < 4; j++) {
+          arr[i * 4 + j] *= f;
+        }
+        for (let j = 0; j < i + 1; j++) {
+          inv[i * 4 + j] *= f;
+        }
       }
       // eliminate lower-triangular part
       for (let ii = i + 1; ii < 4; ii++) {

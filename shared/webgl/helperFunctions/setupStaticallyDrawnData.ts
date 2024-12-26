@@ -33,14 +33,17 @@ export function setupStaticallyDrawnData({
     program,
     attributeName,
   });
-  vbo.bind({ gl });
-  attribute.bindWithArrayBuffer({
+  vbo.bindAndExecute({
     gl,
-    program,
-    size: numberOfItemsForEachVertex,
-    vertexBufferObject: vbo,
+    callback: (boundBuffer: VertexBufferObject) => {
+      attribute.bindWithArrayBuffer({
+        gl,
+        program,
+        size: numberOfItemsForEachVertex,
+        vertexBufferObject: boundBuffer,
+      });
+      boundBuffer.updateData({ gl, data });
+    },
   });
-  vbo.updateData({ gl, data });
-  vbo.unbind({ gl });
   return vbo;
 }

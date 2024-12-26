@@ -64,9 +64,12 @@ export class WebGLObjects {
       data: ref,
     });
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    indexBufferObject.bind({ gl });
-    indexBufferObject.draw({ gl, mode: gl.TRIANGLES });
-    indexBufferObject.unbind({ gl });
+    indexBufferObject.bindAndExecute({
+      gl,
+      callback: (boundBuffer: IndexBufferObject) => {
+        boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+      },
+    });
   }
 
   public handleResizeEvent() {

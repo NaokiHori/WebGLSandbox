@@ -1,6 +1,25 @@
 import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
 
+function computeRotatingMatrix(tangential: Vector3): Matrix44 {
+  // consider a vector V from origin to a point on a two-dimensional circle whose normal is (0, 0, 1)
+  // compute quaternion projecting (0, 0, 1) to the computed normal, operating it onto V
+  const unitZVector = new Vector3({ x: 0, y: 0, z: 1 });
+  const r = 1 + unitZVector.dot(tangential);
+  const c = unitZVector.cross(tangential);
+  const i = c.x;
+  const j = c.y;
+  const k = c.z;
+  const norm = Math.sqrt(
+    Math.pow(r, 2) + Math.pow(i, 2) + Math.pow(j, 2) + Math.pow(k, 2),
+  );
+  return new Matrix44({
+    type: "rotate",
+    angle: 2 * Math.acos(r / norm),
+    vector: new Vector3({ x: i / norm, y: j / norm, z: k / norm }),
+  });
+}
+
 function computeMetricsOnCircle(
   modelParameter: [number, number],
   nLongitude: number,
@@ -31,24 +50,7 @@ function computeMetricsOnCircle(
   const dyds = drds * sint + r * dtds * cost;
   const tangential = new Vector3({ x: dxds, y: dyds, z: dzds }).normalize();
   // draw circle around torus knot
-  // consider a vector V from origin to a point on a two-dimensional circle whose normal is (0, 0, 1)
-  // compute quaternion projecting (0, 0, 1) to the computed normal, operating it onto V
-  const rotateMatrix = (function () {
-    const unitZVector = new Vector3({ x: 0, y: 0, z: 1 });
-    const r = 1 + unitZVector.dot(tangential);
-    const c = unitZVector.cross(tangential);
-    const i = c.x;
-    const j = c.y;
-    const k = c.z;
-    const norm = Math.sqrt(
-      Math.pow(r, 2) + Math.pow(i, 2) + Math.pow(j, 2) + Math.pow(k, 2),
-    );
-    return new Matrix44({
-      type: "rotate",
-      angle: 2 * Math.acos(r / norm),
-      vector: new Vector3({ x: i / norm, y: j / norm, z: k / norm }),
-    });
-  })();
+  const rotateMatrix: Matrix44 = computeRotatingMatrix(tangential);
   const vertices = new Array<Vector3>(nLongitude);
   const normals = new Array<Vector3>(nLongitude);
   for (let nL = 0; nL < nLongitude; nL++) {

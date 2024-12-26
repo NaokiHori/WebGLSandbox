@@ -43,10 +43,7 @@ export function initProgram({
     gl.FRAGMENT_SHADER,
     fragmentShaderSource,
   );
-  const program: WebGLProgram | null = gl.createProgram();
-  if (null === program) {
-    throw new Error("gl.createProgram failed");
-  }
+  const program: WebGLProgram = gl.createProgram();
   gl.attachShader(program, vertexShader);
   gl.attachShader(program, fragmentShader);
   if (0 < transformFeedbackVaryings.length) {
