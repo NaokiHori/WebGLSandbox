@@ -10,49 +10,6 @@ import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 
-class ControlParameters {
-  private _mean: number;
-  private _amp: number;
-  private _freq: number;
-  private _phase: number;
-  private _time: number;
-
-  public constructor({
-    mean,
-    amp,
-    freq,
-    phase,
-  }: {
-    mean: number;
-    amp: number;
-    freq: number;
-    phase: number;
-  }) {
-    this._mean = mean;
-    this._amp = amp;
-    this._freq = freq;
-    this._phase = phase;
-    this._time = 0;
-    this.update();
-  }
-
-  public update() {
-    this._time += 0.01;
-  }
-
-  public get(): number {
-    return (
-      this._mean + this._amp * Math.sin(this._freq * this._time + this._phase)
-    );
-  }
-}
-
-interface LorenzParameters {
-  sigma: ControlParameters;
-  rho: ControlParameters;
-  beta: ControlParameters;
-}
-
 function getCanvasAspectRatio(canvas: HTMLCanvasElement): number {
   return canvas.width / canvas.height;
 }
@@ -62,7 +19,6 @@ export class WebGLObjects {
   private _canvasAspectRatio: number;
   private _gl: WebGL2RenderingContext;
   private _program: WebGLProgram;
-  private _lorenzParamters: LorenzParameters;
   private _positionsVertexAttribute: VertexAttribute;
   private _positionVertexBufferObjects: [
     VertexBufferObject,
@@ -80,6 +36,7 @@ export class WebGLObjects {
     numberOfVertices: number,
     positions: Float32Array,
     colors: Float32Array,
+    lorenzParams: Float32Array,
     cameraPositionZ: number,
   ) {
     const gl: WebGL2RenderingContext = getWebGL2RenderingContext({
@@ -89,7 +46,7 @@ export class WebGLObjects {
       },
     });
     gl.disable(gl.CULL_FACE);
-    gl.disable(gl.DEPTH_TEST);
+    gl.enable(gl.DEPTH_TEST);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clearDepth(1);
     const program: WebGLProgram = initProgram({
@@ -139,31 +96,19 @@ export class WebGLObjects {
     setupStaticallyDrawnData({
       gl,
       program,
+      attributeName: "a_lorenz_params",
+      numberOfVertices,
+      numberOfItemsForEachVertex: "srb".length,
+      data: lorenzParams,
+    });
+    setupStaticallyDrawnData({
+      gl,
+      program,
       attributeName: "a_color",
       numberOfVertices,
       numberOfItemsForEachVertex: "rgb".length,
       data: colors,
     });
-    this._lorenzParamters = {
-      sigma: new ControlParameters({
-        mean: 40,
-        amp: 20,
-        freq: 4 * Math.random(),
-        phase: Math.random(),
-      }),
-      rho: new ControlParameters({
-        mean: 50,
-        amp: 35,
-        freq: 0.5 * Math.random(),
-        phase: Math.random(),
-      }),
-      beta: new ControlParameters({
-        mean: 8 / 3,
-        amp: 2,
-        freq: 0.1 * Math.random(),
-        phase: Math.random(),
-      }),
-    };
     //
     this._canvas = canvas;
     this._canvasAspectRatio = getCanvasAspectRatio(canvas);
@@ -203,52 +148,12 @@ export class WebGLObjects {
     });
   }
 
-  private updateLorenzParameters() {
-    const gl: WebGL2RenderingContext = this._gl;
-    const program: WebGLProgram = this._program;
-    const lorenzParameters: LorenzParameters = this._lorenzParamters;
-    lorenzParameters.sigma.update();
-    lorenzParameters.rho.update();
-    lorenzParameters.beta.update();
-    setUniform({
-      gl,
-      program,
-      dataType: "FLOAT32",
-      uniformName: "u_lorenz_sigma",
-      data: [lorenzParameters.sigma.get()],
-    });
-    setUniform({
-      gl,
-      program,
-      dataType: "FLOAT32",
-      uniformName: "u_lorenz_rho",
-      data: [lorenzParameters.rho.get()],
-    });
-    setUniform({
-      gl,
-      program,
-      dataType: "FLOAT32",
-      uniformName: "u_lorenz_beta",
-      data: [lorenzParameters.beta.get()],
-    });
-  }
-
-  public getLorenzParameters(): [number, number, number] {
-    const lorenzParameters: LorenzParameters = this._lorenzParamters;
-    return [
-      lorenzParameters.sigma.get(),
-      lorenzParameters.rho.get(),
-      lorenzParameters.beta.get(),
-    ];
-  }
-
   public draw(rotationVector: Vector3, rotationAngle: number) {
     const gl: WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
     const canvasAspectRatio = this._canvasAspectRatio;
     //
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    this.updateLorenzParameters();
     const rotationMatrix = new Matrix44({
       type: "rotate",
       angle: rotationAngle,

@@ -7,61 +7,43 @@ import { ClampedValue } from "../../shared/util/clampedValue";
 import { Toggle } from "../../shared/util/toggle";
 import { saveJPEGImage } from "../../shared/saveJPEGImage";
 import { PointerEvents } from "../../shared/pointerEvents";
-
-function convertHslToRgb(h: number, s: number, l: number) {
-  if (h < 0 || 1 < h) {
-    throw new Error(`invalid hue value: ${h.toString()}`);
-  }
-  if (s < 0 || 1 < s) {
-    throw new Error(`invalid saturation value: ${s.toString()}`);
-  }
-  if (l < 0 || 1 < l) {
-    throw new Error(`invalid lightness value: ${l.toString()}`);
-  }
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const hp = 6 * h;
-  const x = c * (1 - Math.abs(hp % 2));
-  const [rp, gp, bp] = (function () {
-    if (hp < 1) {
-      return [c, x, 0];
-    } else if (hp < 2) {
-      return [x, c, 0];
-    } else if (hp < 3) {
-      return [0, c, x];
-    } else if (hp < 4) {
-      return [0, x, c];
-    } else if (hp < 5) {
-      return [x, 0, c];
-    } else {
-      return [c, 0, x];
-    }
-  })();
-  const m = l - 0.5 * c;
-  return [rp + m, gp + m, bp + m];
-}
+import { genRange } from "../../shared/util/random";
 
 function initParticles(nitems: number): {
   positions: Float32Array;
   colors: Float32Array;
+  lorenzParams: Float32Array;
 } {
+  const sigma = 10;
+  const rhoMin = 42;
+  const rhoMax = 98;
+  const beta = 8 / 3;
   const factor = 0.01;
-  const positions = new Array<number[]>();
-  const colors = new Array<number[]>();
+  const positions = new Float32Array(nitems * 3);
+  const colors = new Float32Array(nitems * 3);
+  const lorenzParams = new Float32Array(nitems * 3);
   for (let i = 0; i < nitems; i++) {
-    const x = 2 * (Math.random() - 0.5);
-    const y = 2 * (Math.random() - 0.5);
-    const z = 2 * (Math.random() - 0.5);
-    const position = [factor * x, factor * y, factor * z];
-    positions.push(position);
-    const h = 0.5 + Math.atan2(y, x) / 2 / Math.PI;
-    const s = 0.5 * (1 + z);
-    const l = 0.8;
-    const [r, g, b] = convertHslToRgb(h, s, l);
-    colors.push([r, g, b]);
+    const x = genRange({ minValue: -1, maxValue: 1 });
+    const y = genRange({ minValue: -1, maxValue: 1 });
+    const z = genRange({ minValue: -1, maxValue: 1 });
+    positions[3 * i + 0] = factor * x;
+    positions[3 * i + 1] = factor * y;
+    positions[3 * i + 2] = factor * z;
+    const rho = rhoMin + (i / nitems) * (rhoMax - rhoMin);
+    lorenzParams[3 * i + 0] = sigma;
+    lorenzParams[3 * i + 1] = rho;
+    lorenzParams[3 * i + 2] = beta;
+    const r = Math.min(1, Math.max(0, (3 * i) / nitems - 0));
+    const g = Math.min(1, Math.max(0, (3 * i) / nitems - 1));
+    const b = Math.min(1, Math.max(0, (3 * i) / nitems - 2));
+    colors[3 * i + 0] = r;
+    colors[3 * i + 1] = g;
+    colors[3 * i + 2] = b;
   }
   return {
-    positions: new Float32Array(positions.flat()),
-    colors: new Float32Array(colors.flat()),
+    positions,
+    colors,
+    lorenzParams,
   };
 }
 
@@ -113,7 +95,12 @@ window.addEventListener("load", () => {
   const {
     positions,
     colors,
-  }: { positions: Float32Array; colors: Float32Array } = initParticles(nitems);
+    lorenzParams,
+  }: {
+    positions: Float32Array;
+    colors: Float32Array;
+    lorenzParams: Float32Array;
+  } = initParticles(nitems);
   // set-up webgl-related stuffs
   const cameraPositionZ = new ClampedValue({
     isPeriodic: false,
@@ -126,6 +113,7 @@ window.addEventListener("load", () => {
     nitems,
     positions,
     colors,
+    lorenzParams,
     cameraPositionZ.get(),
   );
   const isPaused = new Toggle({
@@ -139,7 +127,7 @@ window.addEventListener("load", () => {
   });
   // performance checker
   const timer = new Timer(1000, () => {
-    console.log(webGLObjects.getLorenzParameters().toString());
+    /* nothing to do for now */
   });
   const rotationVector = new Vector3({
     x: Math.random(),
