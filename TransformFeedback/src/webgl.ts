@@ -2,6 +2,7 @@ import { getWebGL2RenderingContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
 import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
+import { TransformFeedback } from "../../shared/webgl/transformFeedback";
 import { setupStaticallyDrawnData } from "../../shared/webgl/helperFunctions/setupStaticallyDrawnData";
 import { setUniform, setUniformMatrix } from "../../shared/webgl/uniform";
 import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
@@ -63,12 +64,14 @@ export class WebGLObjects {
   private _program: WebGLProgram;
   private _lorenzParamters: LorenzParameters;
   private _positionsVertexAttribute: VertexAttribute;
-  private _aPosition1: VertexBufferObject;
-  private _aPosition2: VertexBufferObject;
-  private _transformFeedback: WebGLTransformFeedback;
+  private _positionVertexBufferObjects: [
+    VertexBufferObject,
+    VertexBufferObject,
+  ];
+  private _transformFeedback: TransformFeedback;
   // specifies the direction of transform feedback
-  // true:  from aPosition1 to aPosition2
-  // false: from aPosition2 to aPosition1
+  // true:  from 0 to 1
+  // false: from 1 to 0
   private _isForward: boolean;
   private _cameraPositionZ: number;
 
@@ -95,29 +98,33 @@ export class WebGLObjects {
       fragmentShaderSource,
       transformFeedbackVaryings: ["a_position_new"],
     });
-    const transformFeedback = gl.createTransformFeedback();
-    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
-    // attribute, which will be accessed by the two aPosition buffers
+    const transformFeedback = new TransformFeedback({ gl });
+    // attribute, which will be accessed by the two buffers alternately
     const positionsVertexAttribute = new VertexAttribute({
       gl,
       program,
       attributeName: "a_position_old",
     });
     // two buffers used as input / output, switched everytime
-    const aPosition1 = new VertexBufferObject({
-      gl,
-      numberOfVertices,
-      numberOfItemsForEachVertex: "xyz".length,
-      usage: gl.DYNAMIC_COPY,
-    });
-    const aPosition2 = new VertexBufferObject({
-      gl,
-      numberOfVertices,
-      numberOfItemsForEachVertex: "xyz".length,
-      usage: gl.DYNAMIC_COPY,
-    });
+    const positionVertexBufferObjects: [
+      VertexBufferObject,
+      VertexBufferObject,
+    ] = [
+      new VertexBufferObject({
+        gl,
+        numberOfVertices,
+        numberOfItemsForEachVertex: "xyz".length,
+        usage: gl.DYNAMIC_COPY,
+      }),
+      new VertexBufferObject({
+        gl,
+        numberOfVertices,
+        numberOfItemsForEachVertex: "xyz".length,
+        usage: gl.DYNAMIC_COPY,
+      }),
+    ];
     // send the initial positions to the first buffer
-    aPosition1.bindAndExecute({
+    positionVertexBufferObjects[0].bindAndExecute({
       gl,
       callback: (boundBuffer: VertexBufferObject) => {
         positionsVertexAttribute.bindWithArrayBuffer({
@@ -163,8 +170,7 @@ export class WebGLObjects {
     this._gl = gl;
     this._program = program;
     this._positionsVertexAttribute = positionsVertexAttribute;
-    this._aPosition1 = aPosition1;
-    this._aPosition2 = aPosition2;
+    this._positionVertexBufferObjects = positionVertexBufferObjects;
     this._transformFeedback = transformFeedback;
     this._isForward = true;
     this._cameraPositionZ = cameraPositionZ;
@@ -278,31 +284,39 @@ export class WebGLObjects {
     //
     const positionsVertexAttribute: VertexAttribute =
       this._positionsVertexAttribute;
-    const transformFeedback: WebGLTransformFeedback = this._transformFeedback;
-    const buffer1: VertexBufferObject = this._isForward
-      ? this._aPosition1
-      : this._aPosition2;
-    const buffer2: VertexBufferObject = this._isForward
-      ? this._aPosition2
-      : this._aPosition1;
-    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
-    buffer1.bindAndExecute({
+    const transformFeedback: TransformFeedback = this._transformFeedback;
+    const inputBuffer: VertexBufferObject = this._isForward
+      ? this._positionVertexBufferObjects[0]
+      : this._positionVertexBufferObjects[1];
+    const outputBuffer: VertexBufferObject = this._isForward
+      ? this._positionVertexBufferObjects[1]
+      : this._positionVertexBufferObjects[0];
+    // bind outputBuffer as the transform feedback buffer
+    transformFeedback.bindBufferBaseAndExecute({
       gl,
-      callback: (boundBuffer: VertexBufferObject) => {
-        positionsVertexAttribute.bindWithArrayBuffer({
+      vertexBufferObject: outputBuffer,
+      callback: () => {
+        // bind inputBuffer as the array buffer
+        inputBuffer.bindAndExecute({
           gl,
-          program,
-          size: boundBuffer.numberOfItemsForEachVertex,
-          vertexBufferObject: boundBuffer,
+          callback: (boundArrayBuffer: VertexBufferObject) => {
+            // bind position vertex attribute with the input buffer,
+            //   such that this buffer is considered to be
+            //   the attribute: "a_position"
+            positionsVertexAttribute.bindWithArrayBuffer({
+              gl,
+              program,
+              size: boundArrayBuffer.numberOfItemsForEachVertex,
+              vertexBufferObject: boundArrayBuffer,
+            });
+            // draw call
+            gl.beginTransformFeedback(gl.POINTS);
+            boundArrayBuffer.draw({ gl, mode: gl.POINTS });
+            gl.endTransformFeedback();
+          },
         });
-        gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, buffer2.buffer);
-        gl.beginTransformFeedback(gl.POINTS);
-        boundBuffer.draw({ gl, mode: gl.POINTS });
-        gl.endTransformFeedback();
-        gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
       },
     });
-    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
     this._isForward = !this._isForward;
   }
 }
