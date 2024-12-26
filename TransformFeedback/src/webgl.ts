@@ -3,6 +3,7 @@ import { initProgram } from "../../shared/webgl/program";
 import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
 import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
 import { setupStaticallyDrawnData } from "../../shared/webgl/helperFunctions/setupStaticallyDrawnData";
+import { setUniform, setUniformMatrix } from "../../shared/webgl/uniform";
 import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
 import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
@@ -183,7 +184,13 @@ export class WebGLObjects {
     const gl: WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
     const dt: number = isPaused ? 0 : 0.002;
-    gl.uniform1f(gl.getUniformLocation(program, "u_dt"), dt);
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_dt",
+      data: [dt],
+    });
   }
 
   private updateLorenzParameters() {
@@ -193,18 +200,27 @@ export class WebGLObjects {
     lorenzParameters.sigma.update();
     lorenzParameters.rho.update();
     lorenzParameters.beta.update();
-    gl.uniform1f(
-      gl.getUniformLocation(program, "u_lorenz_sigma"),
-      lorenzParameters.sigma.get(),
-    );
-    gl.uniform1f(
-      gl.getUniformLocation(program, "u_lorenz_rho"),
-      lorenzParameters.rho.get(),
-    );
-    gl.uniform1f(
-      gl.getUniformLocation(program, "u_lorenz_beta"),
-      lorenzParameters.beta.get(),
-    );
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_lorenz_sigma",
+      data: [lorenzParameters.sigma.get()],
+    });
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_lorenz_rho",
+      data: [lorenzParameters.rho.get()],
+    });
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_lorenz_beta",
+      data: [lorenzParameters.beta.get()],
+    });
   }
 
   public getLorenzParameters(): [number, number, number] {
@@ -245,17 +261,16 @@ export class WebGLObjects {
       near: cameraPosition.norm(),
       far: cameraPosition.norm() * 2,
     });
-    gl.uniformMatrix4fv(
-      gl.getUniformLocation(program, "u_mvp_matrix"),
-      false,
-      new Float32Array(
-        perspectiveMatrix
-          .matmul(viewMatrix)
-          .matmul(modelMatrix)
-          .transpose()
-          .flat(),
-      ),
-    );
+    setUniformMatrix({
+      gl,
+      program,
+      uniformName: "u_mvp_matrix",
+      data: perspectiveMatrix
+        .matmul(viewMatrix)
+        .matmul(modelMatrix)
+        .transpose()
+        .flat(),
+    });
     //
     const positionsVertexAttribute: VertexAttribute =
       this._positionsVertexAttribute;

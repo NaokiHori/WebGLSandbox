@@ -2,6 +2,7 @@ import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { setupStaticallyDrawnData } from "../../shared/webgl/helperFunctions/setupStaticallyDrawnData";
+import { setUniform, setUniformMatrix } from "../../shared/webgl/uniform";
 import { Vector3 } from "../../shared/linearAlgebra/vector3";
 import { Matrix44 } from "../../shared/linearAlgebra/matrix44";
 import { initModel } from "./model";
@@ -119,11 +120,12 @@ export class WebGLObjects {
       new Vector3({ x: 0.0, y: 0.0, z: 0.0 }),
     );
     const inverseModelMatrix: Matrix44 = modelMatrix.inv();
-    gl.uniformMatrix4fv(
-      gl.getUniformLocation(program, "u_inverse_model_matrix"),
-      false,
-      new Float32Array(inverseModelMatrix.transpose().flat()),
-    );
+    setUniformMatrix({
+      gl,
+      program,
+      uniformName: "u_inverse_model_matrix",
+      data: inverseModelMatrix.transpose().flat(),
+    });
     // camera
     const cameraPosition = new Vector3({
       x: 0,
@@ -142,11 +144,14 @@ export class WebGLObjects {
       far: cameraPosition.norm() * 2,
     });
     (function initializeCamera(program: WebGLProgram) {
-      const lineOfSight = cameraPosition.normalize().multiply(-1);
-      gl.uniform3fv(
-        gl.getUniformLocation(program, "u_line_of_sight"),
-        new Float32Array(lineOfSight.flat()),
-      );
+      const lineOfSight: Vector3 = cameraPosition.normalize().multiply(-1);
+      setUniform({
+        gl,
+        program,
+        dataType: "FLOAT32",
+        uniformName: "u_line_of_sight",
+        data: lineOfSight.flat(),
+      });
     })(program);
     // light configurations
     (function initializeLight(program: WebGLProgram) {
@@ -155,39 +160,53 @@ export class WebGLObjects {
         y: 2,
         z: -1,
       }).normalize();
-      gl.uniform3fv(
-        gl.getUniformLocation(program, "u_diffuse_light"),
-        new Float32Array(light.flat()),
-      );
+      setUniform({
+        gl,
+        program,
+        dataType: "FLOAT32",
+        uniformName: "u_diffuse_light",
+        data: light.flat(),
+      });
     })(program);
-    gl.uniform1f(
-      gl.getUniformLocation(program, "u_use_diffuse_light"),
-      this._useDiffuseLight ? 1 : 0,
-    );
-    gl.uniform1f(
-      gl.getUniformLocation(program, "u_use_ambient_light"),
-      this._useAmbientLight ? 1 : 0,
-    );
-    gl.uniform1f(
-      gl.getUniformLocation(program, "u_use_specular_light"),
-      this._useSpecularLight ? 1 : 0,
-    );
-    gl.uniform4fv(
-      gl.getUniformLocation(program, "u_ambient_light_color"),
-      new Float32Array([0.05, 0.05, 0.05, 0]),
-    );
+    setUniform({
+      gl,
+      program,
+      dataType: "INT32",
+      uniformName: "u_use_diffuse_light",
+      data: [this._useDiffuseLight ? 1 : 0],
+    });
+    setUniform({
+      gl,
+      program,
+      dataType: "INT32",
+      uniformName: "u_use_ambient_light",
+      data: [this._useAmbientLight ? 1 : 0],
+    });
+    setUniform({
+      gl,
+      program,
+      dataType: "INT32",
+      uniformName: "u_use_specular_light",
+      data: [this._useSpecularLight ? 1 : 0],
+    });
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_ambient_light_color",
+      data: [0.05, 0.05, 0.05, 0],
+    });
     // find mvp matrix
-    gl.uniformMatrix4fv(
-      gl.getUniformLocation(program, "u_mvp_matrix"),
-      false,
-      new Float32Array(
-        perspectiveMatrix
-          .matmul(viewMatrix)
-          .matmul(modelMatrix)
-          .transpose()
-          .flat(),
-      ),
-    );
+    setUniformMatrix({
+      gl,
+      program,
+      uniformName: "u_mvp_matrix",
+      data: perspectiveMatrix
+        .matmul(viewMatrix)
+        .matmul(modelMatrix)
+        .transpose()
+        .flat(),
+    });
     // draw using index buffer object
     indexBufferObject.bind({ gl });
     indexBufferObject.draw({ gl, mode: gl.TRIANGLES });

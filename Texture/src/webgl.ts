@@ -3,6 +3,7 @@ import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
 import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
+import { setUniform } from "../../shared/webgl/uniform";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 import sampleImage from "../sample.jpeg";
@@ -54,7 +55,13 @@ export class WebGLObjects {
       });
       // texture configuration
       gl.activeTexture(gl.TEXTURE0);
-      gl.uniform1i(gl.getUniformLocation(program, "u_texture"), 0);
+      setUniform({
+        gl,
+        program,
+        dataType: "INT32",
+        uniformName: "u_texture",
+        data: [0],
+      });
       const image = new Image();
       const texture: WebGLTexture = gl.createTexture();
       image.src = sampleImage;
@@ -105,7 +112,13 @@ export class WebGLObjects {
         : [1 / canvasAspectRatio, 1];
     })();
     gl.viewport(0, 0, w, h);
-    gl.uniform2f(gl.getUniformLocation(program, "u_scale"), scale[0], scale[1]);
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_scale",
+      data: scale,
+    });
   }
 
   public draw() {

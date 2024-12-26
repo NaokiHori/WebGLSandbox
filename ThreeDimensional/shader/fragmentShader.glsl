@@ -4,9 +4,9 @@
 
 precision mediump float;
 
-uniform float u_use_diffuse_light;
-uniform float u_use_ambient_light;
-uniform float u_use_specular_light;
+uniform int u_use_diffuse_light;
+uniform int u_use_ambient_light;
+uniform int u_use_specular_light;
 uniform vec3 u_diffuse_light;
 uniform vec3 u_line_of_sight;
 uniform vec4 u_ambient_light_color;
@@ -19,15 +19,15 @@ in vec4 v_color;
 out vec4 frag_color;
 
 bool use_diffuse_light(void) {
-  return 0.5 < u_use_diffuse_light;
+  return 0 != u_use_diffuse_light;
 }
 
 bool use_ambient_light(void) {
-  return 0.5 < u_use_ambient_light;
+  return 0 != u_use_ambient_light;
 }
 
 bool use_specular_light(void) {
-  return 0.5 < u_use_specular_light;
+  return 0 != u_use_specular_light;
 }
 
 vec3 apply_inverse_model_matrix(vec3 vector) {

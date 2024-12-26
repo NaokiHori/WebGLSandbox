@@ -2,6 +2,7 @@ import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
+import { setUniform } from "../../shared/webgl/uniform";
 import { ClampedValue } from "../../shared/util/clampedValue";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
@@ -31,10 +32,13 @@ export class WebGLObjects {
         attributeName: "a_position",
         aspectRatio: 1,
       });
-    gl.uniform1f(
-      gl.getUniformLocation(program, "u_domain_size"),
-      domainSize.get(),
-    );
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_domain_size",
+      data: [domainSize.get()],
+    });
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
@@ -45,8 +49,20 @@ export class WebGLObjects {
     const gl: WebGLContext = this._gl;
     const program: WebGLProgram = this._program;
     const indexBufferObject: IndexBufferObject = this._indexBufferObject;
-    gl.uniform2f(gl.getUniformLocation(program, "u_orig"), orig[0], orig[1]);
-    gl.uniform2f(gl.getUniformLocation(program, "u_ref"), ref[0], ref[1]);
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_orig",
+      data: orig,
+    });
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_ref",
+      data: ref,
+    });
     indexBufferObject.bind({ gl });
     indexBufferObject.draw({ gl, mode: gl.TRIANGLES });
     indexBufferObject.unbind({ gl });
@@ -59,16 +75,25 @@ export class WebGLObjects {
     const w: number = canvas.width;
     const h: number = canvas.height;
     gl.viewport(0, 0, w, h);
-    gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), w, h);
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_resolution",
+      data: [w, h],
+    });
   }
 
   public handleMoveEvent(domainSize: ClampedValue) {
     const gl: WebGLContext = this._gl;
     const program: WebGLProgram = this._program;
-    gl.uniform1f(
-      gl.getUniformLocation(program, "u_domain_size"),
-      domainSize.get(),
-    );
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_domain_size",
+      data: [domainSize.get()],
+    });
   }
 
   public getPixelData(): {

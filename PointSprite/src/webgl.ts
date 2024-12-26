@@ -2,6 +2,7 @@ import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
 import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
+import { setUniform } from "../../shared/webgl/uniform";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 
@@ -97,11 +98,20 @@ export class WebGLObjects {
       return pointSizeInPixels;
     })();
     gl.viewport(0, 0, w, h);
-    gl.uniform2f(gl.getUniformLocation(program, "u_scale"), scale[0], scale[1]);
-    gl.uniform1f(
-      gl.getUniformLocation(program, "u_point_size"),
-      pointSizeInPixels,
-    );
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_scale",
+      data: scale,
+    });
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_point_size",
+      data: [pointSizeInPixels],
+    });
   }
 
   public draw(positions: Float32Array) {

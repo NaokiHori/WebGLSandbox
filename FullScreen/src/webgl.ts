@@ -2,6 +2,7 @@ import { getContext, WebGLContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
 import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
+import { setUniform } from "../../shared/webgl/uniform";
 import vertexShaderSource from "../shader/vertexShader.glsl?raw";
 import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 import vertexShaderSource2 from "../shader/vertexShader.es3.glsl?raw";
@@ -60,7 +61,13 @@ export class WebGLObjects {
       return aspectRatio < 1 ? [1, 1 * aspectRatio] : [1 / aspectRatio, 1];
     })();
     gl.viewport(0, 0, w, h);
-    gl.uniform2f(gl.getUniformLocation(program, "u_scale"), scale[0], scale[1]);
+    setUniform({
+      gl,
+      program,
+      dataType: "FLOAT32",
+      uniformName: "u_scale",
+      data: scale,
+    });
   }
 
   public draw() {
