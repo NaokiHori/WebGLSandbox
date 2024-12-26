@@ -1,7 +1,3 @@
-* {
-  color: #ffffff;
-}
-
 html {
   margin: 0;
   padding: 0;
@@ -34,6 +30,10 @@ body {
   padding-right: 0.25rem;
   padding-bottom: 0.25rem;
   padding-top: 0.25rem;
+}
+
+#linear-interpolation-checkbox-container > label {
+  color: #ffffff;
 }
 
 #linear-interpolation-checkbox {
