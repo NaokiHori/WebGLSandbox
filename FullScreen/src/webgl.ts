@@ -73,6 +73,7 @@ export class WebGLObjects {
   public draw() {
     const gl: WebGLContext = this._gl;
     const vbo: VertexBufferObject = this._positionsVertexBufferObject;
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // the vertex data is unchanged, and thus just a draw call is invoked;
     //   namely no data transfer is needed
     vbo.draw({ gl, mode: gl.TRIANGLE_STRIP });

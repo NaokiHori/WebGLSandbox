@@ -63,6 +63,7 @@ export class WebGLObjects {
       uniformName: "u_ref",
       data: ref,
     });
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     indexBufferObject.bind({ gl });
     indexBufferObject.draw({ gl, mode: gl.TRIANGLES });
     indexBufferObject.unbind({ gl });

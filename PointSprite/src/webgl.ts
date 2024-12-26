@@ -71,13 +71,14 @@ export class WebGLObjects {
     const pointSize: number = this._pointSize;
     const w: number = canvas.width;
     const h: number = canvas.height;
-    const asp: number = w / h;
+    const aspectRatio: number = w / h;
     const scale = (function computeScale() {
       // convert one of the axes, from [- minLength : + minLength] to [- 1 : + 1]
-      const scale = asp < 1 ? [1, 1 * asp] : [1 / asp, 1];
+      const scale =
+        aspectRatio < 1 ? [1, 1 * aspectRatio] : [1 / aspectRatio, 1];
       return [scale[0] / minLength, scale[1] / minLength];
     })();
-    const pixelsPerUnitLength = asp < 1 ? w / minLength : h / minLength;
+    const pixelsPerUnitLength = aspectRatio < 1 ? w / minLength : h / minLength;
     const pointSizeInPixels: number = (function computePointSizeInPixels() {
       const availableRange: Float32Array = gl.getParameter(
         gl.ALIASED_POINT_SIZE_RANGE,
@@ -117,6 +118,7 @@ export class WebGLObjects {
   public draw(positions: Float32Array) {
     const gl: WebGLContext = this._gl;
     const vbo: VertexBufferObject = this._positionsVertexBufferObject;
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     vbo.bind({ gl });
     vbo.updateData({ gl, data: positions });
     vbo.draw({ gl, mode: gl.POINTS });

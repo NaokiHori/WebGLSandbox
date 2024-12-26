@@ -114,7 +114,7 @@ export class WebGLObjects {
     const scalarTexture: WebGLTexture = this._scalarTexture;
     const nScalarField: number = this._nScalarField;
     const scalarGridPoints: [number, number] = this._scalarGridPoints;
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, scalarTexture);
     gl.generateMipmap(gl.TEXTURE_2D_ARRAY);

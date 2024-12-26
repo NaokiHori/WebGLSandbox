@@ -125,7 +125,7 @@ export class WebGLObjects {
     const gl: WebGLContext = this._gl;
     const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     const texture: WebGLTexture = this._texture;
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     indexBufferObject.bind({ gl });
     indexBufferObject.draw({ gl, mode: gl.TRIANGLES });
