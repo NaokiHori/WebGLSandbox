@@ -1,4 +1,4 @@
-import { getContext } from "../../shared/webgl/context";
+import { getWebGL2RenderingContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
@@ -9,16 +9,17 @@ import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 
 export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
-  private _gl: WebGLRenderingContext | WebGL2RenderingContext;
+  private _gl: WebGL2RenderingContext;
   private _program: WebGLProgram;
   private _indexBufferObject: IndexBufferObject;
 
   constructor(canvas: HTMLCanvasElement, domainSize: ClampedValue) {
-    const gl: WebGLRenderingContext | WebGL2RenderingContext = getContext(
+    const gl: WebGL2RenderingContext = getWebGL2RenderingContext({
       canvas,
-      { preserveDrawingBuffer: true },
-      false,
-    );
+      contextAttributes: {
+        preserveDrawingBuffer: true,
+      },
+    });
     const program = initProgram({
       gl,
       vertexShaderSource,
@@ -46,7 +47,7 @@ export class WebGLObjects {
   }
 
   public draw(orig: [number, number], ref: [number, number]) {
-    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
+    const gl: WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
     const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     setUniform({
@@ -74,7 +75,7 @@ export class WebGLObjects {
 
   public handleResizeEvent() {
     const canvas: HTMLCanvasElement = this._canvas;
-    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
+    const gl: WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
     const w: number = canvas.width;
     const h: number = canvas.height;
@@ -89,7 +90,7 @@ export class WebGLObjects {
   }
 
   public handleMoveEvent(domainSize: ClampedValue) {
-    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
+    const gl: WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
     setUniform({
       gl,
@@ -105,7 +106,7 @@ export class WebGLObjects {
     height: number;
     pixelData: Uint8Array;
   } {
-    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
+    const gl: WebGL2RenderingContext = this._gl;
     const width = gl.drawingBufferWidth;
     const height = gl.drawingBufferHeight;
     const rgbaData = new Uint8Array(width * height * "rgba".length);

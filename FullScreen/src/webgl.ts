@@ -1,4 +1,8 @@
-import { getContext } from "../../shared/webgl/context";
+import {
+  getWebGLRenderingContext,
+  getWebGL2RenderingContext,
+  isWebGL2RenderingContext,
+} from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
@@ -16,15 +20,20 @@ export class WebGLObjects {
 
   public constructor(canvas: HTMLCanvasElement) {
     // prepare a context
-    const gl: WebGLRenderingContext | WebGL2RenderingContext = getContext(
-      canvas,
-      { preserveDrawingBuffer: false },
-      true,
-    );
+    const gl: WebGLRenderingContext | WebGL2RenderingContext =
+      Math.random() < 0.5
+        ? getWebGLRenderingContext({
+            canvas,
+            contextAttributes: { preserveDrawingBuffer: false },
+          })
+        : getWebGL2RenderingContext({
+            canvas,
+            contextAttributes: { preserveDrawingBuffer: false },
+          });
     // both WebGL1 and 2 are handled for this page
     // compiler a shader program using the shader sources
     //   which are loaded from the corresponding files
-    const isGL2: boolean = gl instanceof WebGL2RenderingContext;
+    const isGL2 = isWebGL2RenderingContext(gl);
     const program: WebGLProgram = initProgram({
       gl,
       vertexShaderSource: isGL2 ? vertexShaderSource2 : vertexShaderSource,

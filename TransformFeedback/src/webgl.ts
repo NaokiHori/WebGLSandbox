@@ -1,4 +1,4 @@
-import { getContext } from "../../shared/webgl/context";
+import { getWebGL2RenderingContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
 import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
@@ -79,11 +79,12 @@ export class WebGLObjects {
     colors: Float32Array,
     cameraPositionZ: number,
   ) {
-    const gl: WebGL2RenderingContext = getContext(
+    const gl: WebGL2RenderingContext = getWebGL2RenderingContext({
       canvas,
-      { preserveDrawingBuffer: true },
-      false,
-    ) as WebGL2RenderingContext;
+      contextAttributes: {
+        preserveDrawingBuffer: true,
+      },
+    });
     gl.disable(gl.CULL_FACE);
     gl.disable(gl.DEPTH_TEST);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);

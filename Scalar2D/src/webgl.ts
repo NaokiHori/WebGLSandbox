@@ -1,4 +1,4 @@
-import { getContext } from "../../shared/webgl/context";
+import { getWebGL2RenderingContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
@@ -22,11 +22,12 @@ export class WebGLObjects {
     nScalarField: number,
     scalarGridPoints: [number, number],
   ) {
-    const gl = getContext(
+    const gl: WebGL2RenderingContext = getWebGL2RenderingContext({
       canvas,
-      { preserveDrawingBuffer: false },
-      false,
-    ) as WebGL2RenderingContext;
+      contextAttributes: {
+        preserveDrawingBuffer: true,
+      },
+    });
     const program: WebGLProgram = initProgram({
       gl,
       vertexShaderSource,
@@ -78,7 +79,7 @@ export class WebGLObjects {
 
   public handleResizeEvent() {
     const canvas: HTMLCanvasElement = this._canvas;
-    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
+    const gl: WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
     const scalarGridPoints: [number, number] = this._scalarGridPoints;
     const scalarAspectRatio: number = scalarGridPoints[0] / scalarGridPoints[1];

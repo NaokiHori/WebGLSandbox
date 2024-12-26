@@ -1,4 +1,4 @@
-import { getContext } from "../../shared/webgl/context";
+import { getWebGL2RenderingContext } from "../../shared/webgl/context";
 import { initProgram } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { setupStaticallyDrawnData } from "../../shared/webgl/helperFunctions/setupStaticallyDrawnData";
@@ -31,7 +31,7 @@ function getModelMatrix(
 
 export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
-  private _gl: WebGLRenderingContext | WebGL2RenderingContext;
+  private _gl: WebGL2RenderingContext;
   private _program: WebGLProgram;
   private _useDiffuseLight: boolean;
   private _useAmbientLight: boolean;
@@ -40,11 +40,12 @@ export class WebGLObjects {
   private _indexBufferObject: IndexBufferObject;
 
   constructor(canvas: HTMLCanvasElement, modelParameter: [number, number]) {
-    const gl: WebGLRenderingContext | WebGL2RenderingContext = getContext(
+    const gl: WebGL2RenderingContext = getWebGL2RenderingContext({
       canvas,
-      { preserveDrawingBuffer: false },
-      false,
-    );
+      contextAttributes: {
+        preserveDrawingBuffer: true,
+      },
+    });
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
@@ -105,14 +106,14 @@ export class WebGLObjects {
 
   public handleResizeEvent() {
     const canvas: HTMLCanvasElement = this._canvas;
-    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
+    const gl: WebGL2RenderingContext = this._gl;
     const w: number = canvas.width;
     const h: number = canvas.height;
     gl.viewport(0, 0, w, h);
   }
 
   public draw(rotationMatrix: Matrix44, aspectRatio: number) {
-    const gl: WebGLRenderingContext | WebGL2RenderingContext = this._gl;
+    const gl: WebGL2RenderingContext = this._gl;
     const program: WebGLProgram = this._program;
     const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
