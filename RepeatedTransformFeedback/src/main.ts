@@ -12,16 +12,14 @@ import { genRange } from "../../shared/util/random";
 function initParticles(nitems: number): {
   positions: Float32Array;
   colors: Float32Array;
-  lorenzParams: Float32Array;
+  lorenzRhos: Float32Array;
 } {
-  const sigma = 10;
   const rhoMin = 42;
   const rhoMax = 98;
-  const beta = 8 / 3;
-  const factor = 0.01;
+  const factor = 2 * rhoMax;
   const positions = new Float32Array(nitems * 3);
   const colors = new Float32Array(nitems * 3);
-  const lorenzParams = new Float32Array(nitems * 3);
+  const lorenzRhos = new Float32Array(nitems);
   for (let i = 0; i < nitems; i++) {
     const x = genRange({ minValue: -1, maxValue: 1 });
     const y = genRange({ minValue: -1, maxValue: 1 });
@@ -29,10 +27,7 @@ function initParticles(nitems: number): {
     positions[3 * i + 0] = factor * x;
     positions[3 * i + 1] = factor * y;
     positions[3 * i + 2] = factor * z;
-    const rho = rhoMin + (i / nitems) * (rhoMax - rhoMin);
-    lorenzParams[3 * i + 0] = sigma;
-    lorenzParams[3 * i + 1] = rho;
-    lorenzParams[3 * i + 2] = beta;
+    lorenzRhos[i] = rhoMin + (i / nitems) * (rhoMax - rhoMin);
     const r = Math.min(1, Math.max(0, (3 * i) / nitems - 0));
     const g = Math.min(1, Math.max(0, (3 * i) / nitems - 1));
     const b = Math.min(1, Math.max(0, (3 * i) / nitems - 2));
@@ -43,7 +38,7 @@ function initParticles(nitems: number): {
   return {
     positions,
     colors,
-    lorenzParams,
+    lorenzRhos,
   };
 }
 
@@ -95,11 +90,11 @@ window.addEventListener("load", () => {
   const {
     positions,
     colors,
-    lorenzParams,
+    lorenzRhos,
   }: {
     positions: Float32Array;
     colors: Float32Array;
-    lorenzParams: Float32Array;
+    lorenzRhos: Float32Array;
   } = initParticles(nitems);
   // set-up webgl-related stuffs
   const cameraPositionZ = new ClampedValue({
@@ -113,7 +108,7 @@ window.addEventListener("load", () => {
     nitems,
     positions,
     colors,
-    lorenzParams,
+    lorenzRhos,
     cameraPositionZ.get(),
   );
   const isPaused = new Toggle({
@@ -130,9 +125,9 @@ window.addEventListener("load", () => {
     /* nothing to do for now */
   });
   const rotationVector = new Vector3({
-    x: Math.random(),
-    y: Math.random(),
-    z: Math.random(),
+    x: Math.random() - 0.5,
+    y: Math.random() - 0.5,
+    z: Math.random() - 0.5,
   }).normalize();
   const counter = new Counter();
   function draw() {

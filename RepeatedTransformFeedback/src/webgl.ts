@@ -36,7 +36,7 @@ export class WebGLObjects {
     numberOfVertices: number,
     positions: Float32Array,
     colors: Float32Array,
-    lorenzParams: Float32Array,
+    lorenzRhos: Float32Array,
     cameraPositionZ: number,
   ) {
     const gl: WebGL2RenderingContext = getWebGL2RenderingContext({
@@ -96,10 +96,10 @@ export class WebGLObjects {
     setupStaticallyDrawnData({
       gl,
       program,
-      attributeName: "a_lorenz_params",
+      attributeName: "a_lorenz_rho",
       numberOfVertices,
-      numberOfItemsForEachVertex: "srb".length,
-      data: lorenzParams,
+      numberOfItemsForEachVertex: 1,
+      data: lorenzRhos,
     });
     setupStaticallyDrawnData({
       gl,
