@@ -27,6 +27,11 @@ export default defineConfig({
           "OffScreenRenderingScalar",
           "index.html",
         ),
+        offScreenRenderingGPGPU: resolve(
+          root,
+          "OffScreenRenderingGPGPU",
+          "index.html",
+        ),
         simpleTransformFeedback: resolve(
           root,
           "SimpleTransformFeedback",
