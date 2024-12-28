@@ -1,6 +1,8 @@
 import { createElement, getElementUnwrap } from "../../shared/dom";
 import { WebGLObjects } from "./webgl";
 
+const N_DIGITS = 8;
+
 function writeInputContents(
   index: number,
   items: Float32Array,
@@ -9,7 +11,7 @@ function writeInputContents(
   let html = `<div>INPUT ${index.toString()}</div>`;
   html += '<ol start="0">';
   for (const item of items) {
-    html += `<li>${item.toString()}</li>`;
+    html += `<li>${item.toFixed(N_DIGITS).toString()}</li>`;
   }
   html += "</ol>";
   element.innerHTML = html;
@@ -25,7 +27,7 @@ function writeOutputContents(
   let html = "<div>OUTPUT (comparison with the CPU result)</div>";
   html += '<ol start="0">';
   for (let n = 0; n < nitems; n += 1) {
-    html += `<li>GPU: ${output[n].toString()}, CPU: ${(input0[n] + input1[n]).toString()}</li>`;
+    html += `<li>GPU: ${output[n].toFixed(N_DIGITS).toString()}, CPU: ${(input0[n] + input1[n]).toFixed(N_DIGITS).toString()}</li>`;
   }
   html += "</ol>";
   element.innerHTML = html;

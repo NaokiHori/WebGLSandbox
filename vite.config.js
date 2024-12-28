@@ -17,7 +17,16 @@ export default defineConfig({
         juliaSet: resolve(root, "JuliaSet", "index.html"),
         scalar2D: resolve(root, "Scalar2D", "index.html"),
         threeDimensional: resolve(root, "ThreeDimensional", "index.html"),
-        offScreenRendering: resolve(root, "OffScreenRendering", "index.html"),
+        offScreenRenderingFundamental: resolve(
+          root,
+          "OffScreenRenderingFundamental",
+          "index.html",
+        ),
+        offScreenRenderingScalar: resolve(
+          root,
+          "OffScreenRenderingScalar",
+          "index.html",
+        ),
         simpleTransformFeedback: resolve(
           root,
           "SimpleTransformFeedback",

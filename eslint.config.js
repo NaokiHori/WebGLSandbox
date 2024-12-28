@@ -23,7 +23,7 @@ export default tseslint.config(
           builtinGlobals: false,
           hoist: "functions",
           allow: [],
-          ignoreOnInitialization: false,
+          ignoreOnInitialization: true,
         },
       ],
     },

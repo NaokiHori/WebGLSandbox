@@ -1,5 +1,5 @@
 import { getWebGL2RenderingContext } from "../../shared/webgl/context";
-import { initProgram } from "../../shared/webgl/program";
+import { Program } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { Texture, TextureTarget } from "../../shared/webgl/texture";
 import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
@@ -15,7 +15,7 @@ type TextureParam =
 export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
   private _gl: WebGL2RenderingContext;
-  private _program: WebGLProgram;
+  private _program: Program;
   private _indexBufferObject: IndexBufferObject;
   private _scalarTexture: Texture;
   private _scalarTextureParam: TextureParam;
@@ -33,56 +33,65 @@ export class WebGLObjects {
         preserveDrawingBuffer: true,
       },
     });
-    const program: WebGLProgram = initProgram({
+    const program = new Program({
       gl,
       vertexShaderSource,
       fragmentShaderSource,
       transformFeedbackVaryings: [],
     });
-    const { indexBufferObject }: { indexBufferObject: IndexBufferObject } =
-      setupRectangleDomain({
-        gl,
-        program,
-        attributeName: "a_position",
-        aspectRatio: scalarGridPoints[0] / scalarGridPoints[1],
-      });
-    // create and upload the scalar field as a texture
-    const scalarTexture = new Texture({
+    const resultingObjects: {
+      scalarTexture: Texture;
+      indexBufferObject: IndexBufferObject;
+    } = program.use({
       gl,
-      program,
-      target: gl.TEXTURE_2D_ARRAY,
-      textureUnit: 0,
-    });
-    scalarTexture.bindAndExecute({
-      gl,
-      callback: (boundTexture: Texture) => {
-        gl.texStorage3D(
-          boundTexture.target,
-          1,
-          gl.R8,
-          scalarGridPoints[0],
-          scalarGridPoints[1],
-          nScalarField,
-        );
+      callback: (webGLProgram: WebGLProgram) => {
+        const { indexBufferObject }: { indexBufferObject: IndexBufferObject } =
+          setupRectangleDomain({
+            gl,
+            program: webGLProgram,
+            attributeName: "a_position",
+            aspectRatio: scalarGridPoints[0] / scalarGridPoints[1],
+          });
+        // create and upload the scalar field as a texture
+        const scalarTexture = new Texture({
+          gl,
+          program: webGLProgram,
+          target: gl.TEXTURE_2D_ARRAY,
+          textureUnit: 0,
+        });
+        scalarTexture.bindAndExecute({
+          gl,
+          callback: (boundTexture: Texture) => {
+            gl.texStorage3D(
+              boundTexture.target,
+              1,
+              gl.R8,
+              scalarGridPoints[0],
+              scalarGridPoints[1],
+              nScalarField,
+            );
+          },
+        });
+        setupTextureCoordinates({
+          gl,
+          program: webGLProgram,
+          attributeName: "a_texture_coordinates",
+        });
+        setUniform({
+          gl,
+          program: webGLProgram,
+          dataType: "INT32",
+          uniformName: "u_texture",
+          data: [0],
+        });
+        return { scalarTexture, indexBufferObject };
       },
-    });
-    setupTextureCoordinates({
-      gl,
-      program,
-      attributeName: "a_texture_coordinates",
-    });
-    setUniform({
-      gl,
-      program,
-      dataType: "INT32",
-      uniformName: "u_texture",
-      data: [0],
     });
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
-    this._scalarTexture = scalarTexture;
-    this._indexBufferObject = indexBufferObject;
+    this._scalarTexture = resultingObjects.scalarTexture;
+    this._indexBufferObject = resultingObjects.indexBufferObject;
     this._nScalarField = nScalarField;
     this._scalarTextureParam = gl.LINEAR;
     this._scalarGridPoints = scalarGridPoints;
@@ -92,7 +101,7 @@ export class WebGLObjects {
   public handleResizeEvent() {
     const canvas: HTMLCanvasElement = this._canvas;
     const gl: WebGL2RenderingContext = this._gl;
-    const program: WebGLProgram = this._program;
+    const program: Program = this._program;
     const scalarGridPoints: [number, number] = this._scalarGridPoints;
     const scalarAspectRatio: number = scalarGridPoints[0] / scalarGridPoints[1];
     const w: number = canvas.width;
@@ -103,13 +112,18 @@ export class WebGLObjects {
         ? [1 / scalarAspectRatio, canvasAspectRatio / scalarAspectRatio]
         : [1 / canvasAspectRatio, 1];
     })();
-    gl.viewport(0, 0, w, h);
-    setUniform({
+    program.use({
       gl,
-      program,
-      dataType: "FLOAT32",
-      uniformName: "u_scale",
-      data: scale,
+      callback: (webGLProgram: WebGLProgram) => {
+        gl.viewport(0, 0, w, h);
+        setUniform({
+          gl,
+          program: webGLProgram,
+          dataType: "FLOAT32",
+          uniformName: "u_scale",
+          data: scale,
+        });
+      },
     });
   }
 
@@ -123,33 +137,39 @@ export class WebGLObjects {
 
   public draw(scalarField: Uint8Array) {
     const gl: WebGL2RenderingContext = this._gl;
+    const program: Program = this._program;
     const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     const scalarTexture: Texture = this._scalarTexture;
     const nScalarField: number = this._nScalarField;
     const scalarGridPoints: [number, number] = this._scalarGridPoints;
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    scalarTexture.bindAndExecute({
+    program.use({
       gl,
-      callback: (boundTexture: Texture) => {
-        const textureTarget: TextureTarget = boundTexture.target;
-        gl.generateMipmap(textureTarget);
-        gl.texSubImage3D(
-          textureTarget,
-          0,
-          0,
-          0,
-          0,
-          scalarGridPoints[0],
-          scalarGridPoints[1],
-          nScalarField,
-          gl.RED,
-          gl.UNSIGNED_BYTE,
-          scalarField,
-        );
-        indexBufferObject.bindAndExecute({
+      callback: () => {
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        scalarTexture.bindAndExecute({
           gl,
-          callback: (boundBuffer: IndexBufferObject) => {
-            boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+          callback: (boundTexture: Texture) => {
+            const textureTarget: TextureTarget = boundTexture.target;
+            gl.generateMipmap(textureTarget);
+            gl.texSubImage3D(
+              textureTarget,
+              0,
+              0,
+              0,
+              0,
+              scalarGridPoints[0],
+              scalarGridPoints[1],
+              nScalarField,
+              gl.RED,
+              gl.UNSIGNED_BYTE,
+              scalarField,
+            );
+            indexBufferObject.bindAndExecute({
+              gl,
+              callback: (boundBuffer: IndexBufferObject) => {
+                boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+              },
+            });
           },
         });
       },
@@ -158,23 +178,37 @@ export class WebGLObjects {
 
   private updateTextureParam(newScalarTextureParam: TextureParam) {
     const gl: WebGL2RenderingContext = this._gl;
+    const program: Program = this._program;
     const scalarTexture: Texture = this._scalarTexture;
-    scalarTexture.bindAndExecute({
+    program.use({
       gl,
-      callback: (boundTexture: Texture) => {
-        const textureTarget: TextureTarget = boundTexture.target;
-        gl.texParameteri(
-          textureTarget,
-          gl.TEXTURE_MIN_FILTER,
-          newScalarTextureParam,
-        );
-        gl.texParameteri(
-          textureTarget,
-          gl.TEXTURE_MAG_FILTER,
-          newScalarTextureParam,
-        );
-        gl.texParameteri(textureTarget, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(textureTarget, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      callback: () => {
+        scalarTexture.bindAndExecute({
+          gl,
+          callback: (boundTexture: Texture) => {
+            const textureTarget: TextureTarget = boundTexture.target;
+            gl.texParameteri(
+              textureTarget,
+              gl.TEXTURE_MIN_FILTER,
+              newScalarTextureParam,
+            );
+            gl.texParameteri(
+              textureTarget,
+              gl.TEXTURE_MAG_FILTER,
+              newScalarTextureParam,
+            );
+            gl.texParameteri(
+              textureTarget,
+              gl.TEXTURE_WRAP_S,
+              gl.CLAMP_TO_EDGE,
+            );
+            gl.texParameteri(
+              textureTarget,
+              gl.TEXTURE_WRAP_T,
+              gl.CLAMP_TO_EDGE,
+            );
+          },
+        });
       },
     });
     this._scalarTextureParam = newScalarTextureParam;

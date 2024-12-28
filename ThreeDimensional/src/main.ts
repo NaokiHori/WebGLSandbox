@@ -65,7 +65,7 @@ window.addEventListener("load", () => {
   // rescale model and screen on resize event
   window.addEventListener("resize", () => {
     syncCanvasSize(canvas);
-    webGLObjects.handleResizeEvent();
+    webGLObjects.handleResizeEvent(canvas);
     webGLObjects.draw(
       pointerEventHandler.rotationMatrix,
       getAspectRatio(canvas),
@@ -91,6 +91,6 @@ window.addEventListener("load", () => {
   })();
   // initial draw
   syncCanvasSize(canvas);
-  webGLObjects.handleResizeEvent();
+  webGLObjects.handleResizeEvent(canvas);
   webGLObjects.draw(pointerEventHandler.rotationMatrix, getAspectRatio(canvas));
 });

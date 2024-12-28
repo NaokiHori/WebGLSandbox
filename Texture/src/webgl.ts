@@ -1,5 +1,5 @@
 import { getWebGL2RenderingContext } from "../../shared/webgl/context";
-import { initProgram } from "../../shared/webgl/program";
+import { Program } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { Texture, TextureTarget } from "../../shared/webgl/texture";
 import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
@@ -12,7 +12,7 @@ import sampleImage from "../sample.jpeg";
 export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
   private _gl: WebGL2RenderingContext;
-  private _program: WebGLProgram;
+  private _program: Program;
   private _indexBufferObject: IndexBufferObject;
   private _texture: Texture;
   private _imageAspectRatio: number;
@@ -20,18 +20,23 @@ export class WebGLObjects {
   private constructor(
     canvas: HTMLCanvasElement,
     gl: WebGL2RenderingContext,
-    program: WebGLProgram,
+    program: Program,
     texture: Texture,
     imageWidth: number,
     imageHeight: number,
   ) {
     const imageAspectRatio: number = imageWidth / imageHeight;
     const { indexBufferObject }: { indexBufferObject: IndexBufferObject } =
-      setupRectangleDomain({
+      program.use({
         gl,
-        program,
-        attributeName: "a_position",
-        aspectRatio: imageAspectRatio,
+        callback: (webGLProgram: WebGLProgram) => {
+          return setupRectangleDomain({
+            gl,
+            program: webGLProgram,
+            attributeName: "a_position",
+            aspectRatio: imageAspectRatio,
+          });
+        },
       });
     this._canvas = canvas;
     this._gl = gl;
@@ -49,40 +54,50 @@ export class WebGLObjects {
           preserveDrawingBuffer: true,
         },
       });
-      const program: WebGLProgram = initProgram({
+      const program = new Program({
         gl,
         vertexShaderSource,
         fragmentShaderSource,
         transformFeedbackVaryings: [],
       });
       const image = new Image();
-      const texture = new Texture({
+      const texture = program.use({
         gl,
-        target: gl.TEXTURE_2D,
-        program,
-        textureUnit: 0,
+        callback: (webGLProgram: WebGLProgram) => {
+          return new Texture({
+            gl,
+            target: gl.TEXTURE_2D,
+            program: webGLProgram,
+            textureUnit: 0,
+          });
+        },
       });
       image.src = sampleImage;
       image.addEventListener("load", () => {
-        texture.bindAndExecute({
+        program.use({
           gl,
-          callback: (boundTexture: Texture) => {
-            const textureTarget: TextureTarget = boundTexture.target;
-            gl.texImage2D(
-              textureTarget,
-              0,
-              gl.RGBA,
-              gl.RGBA,
-              gl.UNSIGNED_BYTE,
-              image,
-            );
-            gl.generateMipmap(textureTarget);
+          callback: (webGLProgram: WebGLProgram) => {
+            texture.bindAndExecute({
+              gl,
+              callback: (boundTexture: Texture) => {
+                const textureTarget: TextureTarget = boundTexture.target;
+                gl.texImage2D(
+                  textureTarget,
+                  0,
+                  gl.RGBA,
+                  gl.RGBA,
+                  gl.UNSIGNED_BYTE,
+                  image,
+                );
+                gl.generateMipmap(textureTarget);
+              },
+            });
+            setupTextureCoordinates({
+              gl,
+              program: webGLProgram,
+              attributeName: "a_texture_coordinates",
+            });
           },
-        });
-        setupTextureCoordinates({
-          gl,
-          program,
-          attributeName: "a_texture_coordinates",
         });
         const imageWidth = image.width;
         const imageHeight = image.height;
@@ -103,7 +118,7 @@ export class WebGLObjects {
   public handleResizeEvent() {
     const canvas: HTMLCanvasElement = this._canvas;
     const gl: WebGL2RenderingContext = this._gl;
-    const program: WebGLProgram = this._program;
+    const program: Program = this._program;
     const imageAspectRatio: number = this._imageAspectRatio;
     const w: number = canvas.width;
     const h: number = canvas.height;
@@ -113,28 +128,39 @@ export class WebGLObjects {
         ? [1 / imageAspectRatio, canvasAspectRatio / imageAspectRatio]
         : [1 / canvasAspectRatio, 1];
     })();
-    gl.viewport(0, 0, w, h);
-    setUniform({
+    program.use({
       gl,
-      program,
-      dataType: "FLOAT32",
-      uniformName: "u_scale",
-      data: scale,
+      callback: (webGLProgram: WebGLProgram) => {
+        gl.viewport(0, 0, w, h);
+        setUniform({
+          gl,
+          program: webGLProgram,
+          dataType: "FLOAT32",
+          uniformName: "u_scale",
+          data: scale,
+        });
+      },
     });
   }
 
   public draw() {
     const gl: WebGL2RenderingContext = this._gl;
+    const program: Program = this._program;
     const indexBufferObject: IndexBufferObject = this._indexBufferObject;
     const texture: Texture = this._texture;
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    texture.bindAndExecute({
+    program.use({
       gl,
       callback: () => {
-        indexBufferObject.bindAndExecute({
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        texture.bindAndExecute({
           gl,
-          callback: (boundBuffer: IndexBufferObject) => {
-            boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+          callback: () => {
+            indexBufferObject.bindAndExecute({
+              gl,
+              callback: (boundBuffer: IndexBufferObject) => {
+                boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+              },
+            });
           },
         });
       },

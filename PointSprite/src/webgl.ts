@@ -1,5 +1,5 @@
 import { getWebGL2RenderingContext } from "../../shared/webgl/context";
-import { initProgram } from "../../shared/webgl/program";
+import { Program } from "../../shared/webgl/program";
 import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
 import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
 import { setUniform } from "../../shared/webgl/uniform";
@@ -9,7 +9,7 @@ import fragmentShaderSource from "../shader/fragmentShader.glsl?raw";
 export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
   private _gl: WebGL2RenderingContext;
-  private _program: WebGLProgram;
+  private _program: Program;
   private _minLength: number;
   private _pointSize: number;
   private _positionsVertexBufferObject: VertexBufferObject;
@@ -27,14 +27,15 @@ export class WebGLObjects {
         preserveDrawingBuffer: true,
       },
     });
-    const program: WebGLProgram = initProgram({
+    const program = new Program({
       gl,
       vertexShaderSource,
       fragmentShaderSource,
       transformFeedbackVaryings: [],
     });
-    const positionsVertexBufferObject: VertexBufferObject =
-      (function initializePositionsVertexBufferObject() {
+    const positionsVertexBufferObject: VertexBufferObject = program.use({
+      gl,
+      callback: (webGLProgram: WebGLProgram) => {
         const vbo = new VertexBufferObject({
           gl,
           numberOfVertices,
@@ -43,7 +44,7 @@ export class WebGLObjects {
         });
         const attribute = new VertexAttribute({
           gl,
-          program,
+          program: webGLProgram,
           attributeName: "a_position",
         });
         vbo.bindAndExecute({
@@ -51,14 +52,15 @@ export class WebGLObjects {
           callback: (boundBuffer: VertexBufferObject) => {
             attribute.bindWithArrayBuffer({
               gl,
-              program,
+              program: webGLProgram,
               size: numberOfItemsForEachVertex,
               vertexBufferObject: boundBuffer,
             });
           },
         });
         return vbo;
-      })();
+      },
+    });
     this._canvas = canvas;
     this._gl = gl;
     this._program = program;
@@ -70,7 +72,7 @@ export class WebGLObjects {
   public handleResizeEvent() {
     const canvas: HTMLCanvasElement = this._canvas;
     const gl: WebGL2RenderingContext = this._gl;
-    const program: WebGLProgram = this._program;
+    const program: Program = this._program;
     const minLength: number = this._minLength;
     const pointSize: number = this._pointSize;
     const w: number = canvas.width;
@@ -78,52 +80,63 @@ export class WebGLObjects {
     const aspectRatio: number = w / h;
     const scale: [number, number] = computeScale(aspectRatio, minLength);
     const pixelsPerUnitLength = aspectRatio < 1 ? w / minLength : h / minLength;
-    gl.viewport(0, 0, w, h);
-    setUniform({
+    program.use({
       gl,
-      program,
-      dataType: "FLOAT32",
-      uniformName: "u_scale",
-      data: scale,
-    });
-    setUniform({
-      gl,
-      program,
-      dataType: "FLOAT32",
-      uniformName: "u_point_size",
-      data: [
-        (function computePointSizeInPixels() {
-          const availableRange: Float32Array = gl.getParameter(
-            gl.ALIASED_POINT_SIZE_RANGE,
-          ) as Float32Array;
-          let pointSizeInPixels = pointSize * pixelsPerUnitLength;
-          if (pointSizeInPixels < availableRange[0]) {
-            console.log(
-              `Specified pointSizeInPixels is too small: ${availableRange[0].toString()}`,
-            );
-            pointSizeInPixels = availableRange[0];
-          }
-          if (availableRange[1] < pointSizeInPixels) {
-            console.log(
-              `Specified pointSizeInPixels is too large: ${availableRange[1].toString()}`,
-            );
-            pointSizeInPixels = availableRange[1];
-          }
-          return pointSizeInPixels;
-        })(),
-      ],
+      callback: (webGLProgram: WebGLProgram) => {
+        gl.viewport(0, 0, w, h);
+        setUniform({
+          gl,
+          program: webGLProgram,
+          dataType: "FLOAT32",
+          uniformName: "u_scale",
+          data: scale,
+        });
+        setUniform({
+          gl,
+          program: webGLProgram,
+          dataType: "FLOAT32",
+          uniformName: "u_point_size",
+          data: [
+            (function computePointSizeInPixels() {
+              const availableRange: Float32Array = gl.getParameter(
+                gl.ALIASED_POINT_SIZE_RANGE,
+              ) as Float32Array;
+              let pointSizeInPixels = pointSize * pixelsPerUnitLength;
+              if (pointSizeInPixels < availableRange[0]) {
+                console.log(
+                  `Specified pointSizeInPixels is too small: ${availableRange[0].toString()}`,
+                );
+                pointSizeInPixels = availableRange[0];
+              }
+              if (availableRange[1] < pointSizeInPixels) {
+                console.log(
+                  `Specified pointSizeInPixels is too large: ${availableRange[1].toString()}`,
+                );
+                pointSizeInPixels = availableRange[1];
+              }
+              return pointSizeInPixels;
+            })(),
+          ],
+        });
+      },
     });
   }
 
   public draw(positions: Float32Array) {
     const gl: WebGL2RenderingContext = this._gl;
+    const program: Program = this._program;
     const vbo: VertexBufferObject = this._positionsVertexBufferObject;
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    vbo.bindAndExecute({
+    program.use({
       gl,
-      callback: (boundBuffer: VertexBufferObject) => {
-        boundBuffer.updateData({ gl, data: positions });
-        boundBuffer.draw({ gl, mode: gl.POINTS });
+      callback: () => {
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        vbo.bindAndExecute({
+          gl,
+          callback: (boundBuffer: VertexBufferObject) => {
+            boundBuffer.updateData({ gl, data: positions });
+            boundBuffer.draw({ gl, mode: gl.POINTS });
+          },
+        });
       },
     });
   }

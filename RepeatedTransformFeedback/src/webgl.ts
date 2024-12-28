@@ -1,5 +1,5 @@
 import { getWebGL2RenderingContext } from "../../shared/webgl/context";
-import { initProgram } from "../../shared/webgl/program";
+import { Program } from "../../shared/webgl/program";
 import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
 import { VertexAttribute } from "../../shared/webgl/vertexAttribute";
 import { TransformFeedback } from "../../shared/webgl/transformFeedback";
@@ -18,7 +18,7 @@ export class WebGLObjects {
   private _canvas: HTMLCanvasElement;
   private _canvasAspectRatio: number;
   private _gl: WebGL2RenderingContext;
-  private _program: WebGLProgram;
+  private _program: Program;
   private _positionsVertexAttribute: VertexAttribute;
   private _positionVertexBufferObjects: [
     VertexBufferObject,
@@ -49,67 +49,84 @@ export class WebGLObjects {
     gl.enable(gl.DEPTH_TEST);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clearDepth(1);
-    const program: WebGLProgram = initProgram({
+    const program = new Program({
       gl,
       vertexShaderSource,
       fragmentShaderSource,
       transformFeedbackVaryings: ["a_position_new"],
     });
-    const transformFeedback = new TransformFeedback({ gl });
-    // attribute, which will be accessed by the two buffers alternately
-    const positionsVertexAttribute = new VertexAttribute({
+    const {
+      transformFeedback,
+      positionsVertexAttribute,
+      positionVertexBufferObjects,
+    }: {
+      transformFeedback: TransformFeedback;
+      positionsVertexAttribute: VertexAttribute;
+      positionVertexBufferObjects: [VertexBufferObject, VertexBufferObject];
+    } = program.use({
       gl,
-      program,
-      attributeName: "a_position_old",
-    });
-    // two buffers used as input / output, switched everytime
-    const positionVertexBufferObjects: [
-      VertexBufferObject,
-      VertexBufferObject,
-    ] = [
-      new VertexBufferObject({
-        gl,
-        numberOfVertices,
-        numberOfItemsForEachVertex: "xyz".length,
-        usage: gl.DYNAMIC_COPY,
-      }),
-      new VertexBufferObject({
-        gl,
-        numberOfVertices,
-        numberOfItemsForEachVertex: "xyz".length,
-        usage: gl.DYNAMIC_COPY,
-      }),
-    ];
-    // send the initial positions to the first buffer
-    positionVertexBufferObjects[0].bindAndExecute({
-      gl,
-      callback: (boundBuffer: VertexBufferObject) => {
-        positionsVertexAttribute.bindWithArrayBuffer({
+      callback: (webGLProgram: WebGLProgram) => {
+        const transformFeedback = new TransformFeedback({ gl });
+        // attribute, which will be accessed by the two buffers alternately
+        const positionsVertexAttribute = new VertexAttribute({
           gl,
-          program,
-          size: boundBuffer.numberOfItemsForEachVertex,
-          vertexBufferObject: boundBuffer,
+          program: webGLProgram,
+          attributeName: "a_position_old",
         });
-        boundBuffer.updateData({ gl, data: positions });
+        // two buffers used as input / output, switched everytime
+        const positionVertexBufferObjects: [
+          VertexBufferObject,
+          VertexBufferObject,
+        ] = [
+          new VertexBufferObject({
+            gl,
+            numberOfVertices,
+            numberOfItemsForEachVertex: "xyz".length,
+            usage: gl.DYNAMIC_COPY,
+          }),
+          new VertexBufferObject({
+            gl,
+            numberOfVertices,
+            numberOfItemsForEachVertex: "xyz".length,
+            usage: gl.DYNAMIC_COPY,
+          }),
+        ];
+        // send the initial positions to the first buffer
+        positionVertexBufferObjects[0].bindAndExecute({
+          gl,
+          callback: (boundBuffer: VertexBufferObject) => {
+            positionsVertexAttribute.bindWithArrayBuffer({
+              gl,
+              program: webGLProgram,
+              size: boundBuffer.numberOfItemsForEachVertex,
+              vertexBufferObject: boundBuffer,
+            });
+            boundBuffer.updateData({ gl, data: positions });
+          },
+        });
+        setupStaticallyDrawnData({
+          gl,
+          program: webGLProgram,
+          attributeName: "a_lorenz_rho",
+          numberOfVertices,
+          numberOfItemsForEachVertex: 1,
+          data: lorenzRhos,
+        });
+        setupStaticallyDrawnData({
+          gl,
+          program: webGLProgram,
+          attributeName: "a_color",
+          numberOfVertices,
+          numberOfItemsForEachVertex: "rgb".length,
+          data: colors,
+        });
+        return {
+          transformFeedback,
+          positionsVertexAttribute,
+          positionVertexBufferObjects,
+        };
       },
     });
-    setupStaticallyDrawnData({
-      gl,
-      program,
-      attributeName: "a_lorenz_rho",
-      numberOfVertices,
-      numberOfItemsForEachVertex: 1,
-      data: lorenzRhos,
-    });
-    setupStaticallyDrawnData({
-      gl,
-      program,
-      attributeName: "a_color",
-      numberOfVertices,
-      numberOfItemsForEachVertex: "rgb".length,
-      data: colors,
-    });
-    //
     this._canvas = canvas;
     this._canvasAspectRatio = getCanvasAspectRatio(canvas);
     this._gl = gl;
@@ -137,87 +154,95 @@ export class WebGLObjects {
 
   public updateIsPaused(isPaused: boolean) {
     const gl: WebGL2RenderingContext = this._gl;
-    const program: WebGLProgram = this._program;
+    const program: Program = this._program;
     const dt: number = isPaused ? 0 : 0.002;
-    setUniform({
+    program.use({
       gl,
-      program,
-      dataType: "FLOAT32",
-      uniformName: "u_dt",
-      data: [dt],
+      callback: (webGLProgram: WebGLProgram) => {
+        setUniform({
+          gl,
+          program: webGLProgram,
+          dataType: "FLOAT32",
+          uniformName: "u_dt",
+          data: [dt],
+        });
+      },
     });
   }
 
   public draw(rotationVector: Vector3, rotationAngle: number) {
     const gl: WebGL2RenderingContext = this._gl;
-    const program: WebGLProgram = this._program;
+    const program: Program = this._program;
     const canvasAspectRatio = this._canvasAspectRatio;
-    //
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    const rotationMatrix = new Matrix44({
-      type: "rotate",
-      angle: rotationAngle,
-      vector: rotationVector,
-    });
-    const modelMatrix = rotationMatrix;
-    const cameraPosition = new Vector3({
-      x: 0,
-      y: 0,
-      z: this._cameraPositionZ,
-    });
-    const viewMatrix: Matrix44 = new Matrix44({
-      type: "translate",
-      offset: cameraPosition.multiply(-1),
-    });
-    const perspectiveMatrix = new Matrix44({
-      type: "perspective",
-      fieldOfView: (1 / 256) * Math.PI,
-      aspectRatio: canvasAspectRatio,
-      near: cameraPosition.norm(),
-      far: cameraPosition.norm() * 2,
-    });
-    setUniformMatrix({
+    program.use({
       gl,
-      program,
-      uniformName: "u_mvp_matrix",
-      data: perspectiveMatrix
-        .matmul(viewMatrix)
-        .matmul(modelMatrix)
-        .transpose()
-        .flat(),
-    });
-    //
-    const positionsVertexAttribute: VertexAttribute =
-      this._positionsVertexAttribute;
-    const transformFeedback: TransformFeedback = this._transformFeedback;
-    const inputBuffer: VertexBufferObject = this._isForward
-      ? this._positionVertexBufferObjects[0]
-      : this._positionVertexBufferObjects[1];
-    const outputBuffer: VertexBufferObject = this._isForward
-      ? this._positionVertexBufferObjects[1]
-      : this._positionVertexBufferObjects[0];
-    // bind outputBuffer as the transform feedback buffer
-    transformFeedback.bindBufferBaseAndExecute({
-      gl,
-      vertexBufferObject: outputBuffer,
-      callback: () => {
-        // bind inputBuffer as the array buffer
-        inputBuffer.bindAndExecute({
+      callback: (webGLProgram: WebGLProgram) => {
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        const rotationMatrix = new Matrix44({
+          type: "rotate",
+          angle: rotationAngle,
+          vector: rotationVector,
+        });
+        const modelMatrix = rotationMatrix;
+        const cameraPosition = new Vector3({
+          x: 0,
+          y: 0,
+          z: this._cameraPositionZ,
+        });
+        const viewMatrix: Matrix44 = new Matrix44({
+          type: "translate",
+          offset: cameraPosition.multiply(-1),
+        });
+        const perspectiveMatrix = new Matrix44({
+          type: "perspective",
+          fieldOfView: (1 / 256) * Math.PI,
+          aspectRatio: canvasAspectRatio,
+          near: cameraPosition.norm(),
+          far: cameraPosition.norm() * 2,
+        });
+        setUniformMatrix({
           gl,
-          callback: (boundArrayBuffer: VertexBufferObject) => {
-            // bind position vertex attribute with the input buffer,
-            //   such that this buffer is considered to be
-            //   the attribute: "a_position"
-            positionsVertexAttribute.bindWithArrayBuffer({
+          program: webGLProgram,
+          uniformName: "u_mvp_matrix",
+          data: perspectiveMatrix
+            .matmul(viewMatrix)
+            .matmul(modelMatrix)
+            .transpose()
+            .flat(),
+        });
+        const positionsVertexAttribute: VertexAttribute =
+          this._positionsVertexAttribute;
+        const transformFeedback: TransformFeedback = this._transformFeedback;
+        const inputBuffer: VertexBufferObject = this._isForward
+          ? this._positionVertexBufferObjects[0]
+          : this._positionVertexBufferObjects[1];
+        const outputBuffer: VertexBufferObject = this._isForward
+          ? this._positionVertexBufferObjects[1]
+          : this._positionVertexBufferObjects[0];
+        // bind outputBuffer as the transform feedback buffer
+        transformFeedback.bindBufferBaseAndExecute({
+          gl,
+          vertexBufferObject: outputBuffer,
+          callback: () => {
+            // bind inputBuffer as the array buffer
+            inputBuffer.bindAndExecute({
               gl,
-              program,
-              size: boundArrayBuffer.numberOfItemsForEachVertex,
-              vertexBufferObject: boundArrayBuffer,
+              callback: (boundArrayBuffer: VertexBufferObject) => {
+                // bind position vertex attribute with the input buffer,
+                //   such that this buffer is considered to be
+                //   the attribute: "a_position"
+                positionsVertexAttribute.bindWithArrayBuffer({
+                  gl,
+                  program: webGLProgram,
+                  size: boundArrayBuffer.numberOfItemsForEachVertex,
+                  vertexBufferObject: boundArrayBuffer,
+                });
+                // draw call
+                gl.beginTransformFeedback(gl.POINTS);
+                boundArrayBuffer.draw({ gl, mode: gl.POINTS });
+                gl.endTransformFeedback();
+              },
             });
-            // draw call
-            gl.beginTransformFeedback(gl.POINTS);
-            boundArrayBuffer.draw({ gl, mode: gl.POINTS });
-            gl.endTransformFeedback();
           },
         });
       },

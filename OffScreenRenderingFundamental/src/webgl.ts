@@ -1,5 +1,5 @@
 import { getWebGL2RenderingContext } from "../../shared/webgl/context";
-import { initProgram } from "../../shared/webgl/program";
+import { Program } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
 import { setupRectangleDomain } from "./rect";
@@ -65,8 +65,8 @@ function initializeFramebuffer(gl: WebGL2RenderingContext): FramebufferObject {
 
 export class WebGLObjects {
   private _gl: WebGL2RenderingContext;
-  private _offScreenProgram: WebGLProgram;
-  private _mainProgram: WebGLProgram;
+  private _offScreenProgram: Program;
+  private _mainProgram: Program;
   private _framebufferObject: FramebufferObject;
 
   public constructor(canvas: HTMLCanvasElement) {
@@ -74,13 +74,13 @@ export class WebGLObjects {
       canvas,
       contextAttributes: { preserveDrawingBuffer: false },
     });
-    const offScreenProgram: WebGLProgram = initProgram({
+    const offScreenProgram = new Program({
       gl,
       vertexShaderSource: offScreenVSSource,
       fragmentShaderSource: offScreenFSSource,
       transformFeedbackVaryings: [],
     });
-    const mainProgram: WebGLProgram = initProgram({
+    const mainProgram = new Program({
       gl,
       vertexShaderSource: mainVSSource,
       fragmentShaderSource: mainFSSource,
@@ -96,58 +96,57 @@ export class WebGLObjects {
   public draw(canvas: HTMLCanvasElement) {
     const gl = this._gl;
     const framebufferObject = this._framebufferObject;
-    {
-      const program: WebGLProgram = this._offScreenProgram;
-      gl.useProgram(program);
-      const { indexBufferObject }: { indexBufferObject: IndexBufferObject } =
-        setupRectangleDomain({
+    this._offScreenProgram.use({
+      gl,
+      callback: (webGLProgram: WebGLProgram) => {
+        const { indexBufferObject }: { indexBufferObject: IndexBufferObject } =
+          setupRectangleDomain({
+            gl,
+            program: webGLProgram,
+            attributeName: "a_position",
+          });
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebufferObject.framebuffer);
+        gl.viewport(0, 0, WIDTH, HEIGHT);
+        gl.clearColor(1, 0, 0, 1);
+        gl.clearDepth(1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        indexBufferObject.bindAndExecute({
           gl,
-          program,
-          attributeName: "a_position",
+          callback: (boundBuffer: IndexBufferObject) => {
+            boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+          },
         });
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebufferObject.framebuffer);
-      gl.viewport(0, 0, WIDTH, HEIGHT);
-      gl.clearColor(1, 0, 0, 1);
-      gl.clearDepth(1);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      indexBufferObject.bindAndExecute({
-        gl,
-        callback: (boundBuffer: IndexBufferObject) => {
-          boundBuffer.draw({ gl, mode: gl.TRIANGLES });
-        },
-      });
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.useProgram(null);
-    }
-    //
-    {
-      const program: WebGLProgram = this._mainProgram;
-      gl.useProgram(program);
-      setupTextureCoordinates({
-        gl,
-        program,
-        attributeName: "a_texture_coordinates",
-      });
-      const { indexBufferObject }: { indexBufferObject: IndexBufferObject } =
-        setupRectangleDomain({
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      },
+    });
+    this._mainProgram.use({
+      gl,
+      callback: (webGLProgram: WebGLProgram) => {
+        setupTextureCoordinates({
           gl,
-          program,
-          attributeName: "a_position",
+          program: webGLProgram,
+          attributeName: "a_texture_coordinates",
         });
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clearColor(0, 0, 1, 1);
-      gl.clearDepth(1);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      gl.bindTexture(gl.TEXTURE_2D, framebufferObject.texture);
-      indexBufferObject.bindAndExecute({
-        gl,
-        callback: (boundBuffer: IndexBufferObject) => {
-          boundBuffer.draw({ gl, mode: gl.TRIANGLES });
-        },
-      });
-      gl.bindTexture(gl.TEXTURE_2D, null);
-      gl.flush();
-      gl.useProgram(null);
-    }
+        const { indexBufferObject }: { indexBufferObject: IndexBufferObject } =
+          setupRectangleDomain({
+            gl,
+            program: webGLProgram,
+            attributeName: "a_position",
+          });
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(0, 0, 1, 1);
+        gl.clearDepth(1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.bindTexture(gl.TEXTURE_2D, framebufferObject.texture);
+        indexBufferObject.bindAndExecute({
+          gl,
+          callback: (boundBuffer: IndexBufferObject) => {
+            boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+          },
+        });
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        gl.flush();
+      },
+    });
   }
 }
