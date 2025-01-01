@@ -78,6 +78,13 @@ function initializeFramebuffer(
         );
         gl.bindFramebuffer(FRAMEBUFFER_TARGET, null);
       })();
+      const framebufferStatus: GLenum =
+        gl.checkFramebufferStatus(FRAMEBUFFER_TARGET);
+      if (gl.FRAMEBUFFER_COMPLETE !== framebufferStatus) {
+        throw new Error(
+          `Failed to create a framebuffer: ${framebufferStatus.toString()}`,
+        );
+      }
       return { framebuffer, texture };
     },
   });
