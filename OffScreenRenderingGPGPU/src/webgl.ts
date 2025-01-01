@@ -50,16 +50,12 @@ function initializeFramebuffer(
       const texture: WebGLTexture = gl.createTexture();
       (function () {
         gl.bindTexture(TEXTURE_TARGET, texture);
-        gl.texImage2D(
+        gl.texStorage2D(
           TEXTURE_TARGET,
-          0,
+          1,
           TEXTURE_CONFIG.internalFormat,
           WIDTH,
           HEIGHT,
-          0,
-          TEXTURE_CONFIG.format,
-          TEXTURE_CONFIG.type,
-          null,
         );
         gl.texParameteri(TEXTURE_TARGET, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(TEXTURE_TARGET, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
