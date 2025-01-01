@@ -13,6 +13,14 @@ window.addEventListener("load", (): void => {
     webGLObjects.handleResizeEvent(canvas);
   });
   function draw() {
+    let time = 0;
+    for (;;) {
+      const dt: number = webGLObjects.update();
+      time += dt;
+      if (0.1 < time) {
+        break;
+      }
+    }
     webGLObjects.draw(canvas);
     timer.update();
     requestAnimationFrame(draw);

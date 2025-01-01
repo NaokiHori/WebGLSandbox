@@ -14,10 +14,10 @@ const NDIMS = 2;
 const LX = 2;
 const LY = 1;
 
-const DIFFUSIVITY = 1;
+const DIFFUSIVITY = 1e-4;
 
-const WIDTH = 64;
-const HEIGHT = 32;
+const WIDTH = 512;
+const HEIGHT = 256;
 
 const FRAMEBUFFER_TARGET: GLenum = WebGL2RenderingContext.FRAMEBUFFER;
 const TEXTURE_TARGET: GLenum = WebGL2RenderingContext.TEXTURE_2D;
@@ -156,13 +156,16 @@ export class WebGLObjects {
       },
     });
     (function () {
+      const xFreq = 2;
+      const yFreq = 2;
       const data = new Float32Array(WIDTH * HEIGHT);
       for (let j = 0; j < HEIGHT; j++) {
         const y = 0.5 * (2 * j + 1) * (LY / HEIGHT);
+        const sinY = Math.sin(2 * Math.PI * yFreq * y);
         for (let i = 0; i < WIDTH; i++) {
           const x = 0.5 * (2 * i + 1) * (LX / WIDTH);
-          data[j * WIDTH + i] =
-            0.5 + 0.5 * Math.sin(2 * Math.PI * x) * Math.sin(2 * Math.PI * y);
+          const sinX = Math.sin(2 * Math.PI * xFreq * x);
+          data[j * WIDTH + i] = 0.5 + 0.5 * sinX * sinY;
         }
       }
       const framebufferObject: FramebufferObject = framebufferObjects[0];
@@ -236,7 +239,7 @@ export class WebGLObjects {
     });
   }
 
-  public draw(canvas: HTMLCanvasElement) {
+  public update(): number {
     const gl = this._gl;
     const framebufferObjects: [FramebufferObject, FramebufferObject] =
       this._framebufferObjects;
@@ -265,13 +268,24 @@ export class WebGLObjects {
         gl.bindFramebuffer(FRAMEBUFFER_TARGET, null);
       },
     });
+    this._flipFramebuffers = !flipFramebuffers;
+    return computeTimeStepSize();
+  }
+
+  public draw(canvas: HTMLCanvasElement) {
+    const gl = this._gl;
+    const framebufferObjects: [FramebufferObject, FramebufferObject] =
+      this._framebufferObjects;
+    const flipFramebuffers: boolean = this._flipFramebuffers;
+    const framebufferObject: FramebufferObject =
+      framebufferObjects[flipFramebuffers ? 0 : 1];
     this._visualizeProgram.use({
       gl,
       callback: () => {
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clearColor(0, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        const texture: WebGLTexture = outputFramebufferObject.texture;
+        const texture: WebGLTexture = framebufferObject.texture;
         const indexBufferObject: IndexBufferObject = this._indexBufferObject;
         gl.bindTexture(TEXTURE_TARGET, texture);
         indexBufferObject.bindAndExecute({
@@ -283,6 +297,5 @@ export class WebGLObjects {
         gl.bindTexture(TEXTURE_TARGET, null);
       },
     });
-    this._flipFramebuffers = !flipFramebuffers;
   }
 }
