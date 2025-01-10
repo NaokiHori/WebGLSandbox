@@ -2,7 +2,6 @@ import { getWebGL2RenderingContext } from "../../shared/webgl/context";
 import { Program } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
 import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
-import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
 import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
 import { setupStaticallyDrawnData } from "../../shared/webgl/helperFunctions/setupStaticallyDrawnData";
 import { setUniform } from "../../shared/webgl/uniform";
@@ -212,11 +211,6 @@ export class WebGLObjects {
     }: { indexBufferObject: IndexBufferObject } = visualizeProgram.use({
       gl,
       callback: (webGLProgram: WebGLProgram) => {
-        setupTextureCoordinates({
-          gl,
-          program: webGLProgram,
-          attributeName: "a_texture_coordinates",
-        });
         return setupRectangleDomain({
           gl,
           program: webGLProgram,
