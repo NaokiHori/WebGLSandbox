@@ -55,7 +55,6 @@ function handleWindowWheelEvent(
   cameraPositionZ: ClampedValue,
   webGLObjects: WebGLObjects,
 ) {
-  event.preventDefault();
   cameraPositionZ.update(cameraPositionZ.get() + event.deltaY * 0.005);
   webGLObjects.updateCameraPositionZ(cameraPositionZ.get());
 }
