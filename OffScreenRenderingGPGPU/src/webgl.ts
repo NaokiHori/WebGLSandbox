@@ -1,8 +1,10 @@
 import { getWebGL2RenderingContext } from "../../shared/webgl/context";
 import { Program } from "../../shared/webgl/program";
 import { IndexBufferObject } from "../../shared/webgl/indexBufferObject";
+import { VertexBufferObject } from "../../shared/webgl/vertexBufferObject";
 import { setupTextureCoordinates } from "../../shared/webgl/helperFunctions/setupTexture";
 import { setupRectangleDomain } from "../../shared/webgl/helperFunctions/setupRectangleDomain";
+import { setupStaticallyDrawnData } from "../../shared/webgl/helperFunctions/setupStaticallyDrawnData";
 import { setUniform } from "../../shared/webgl/uniform";
 import mainVSSource from "../shader/main.vs.glsl?raw";
 import mainFSSource from "../shader/main.fs.glsl?raw";
@@ -95,7 +97,8 @@ export class WebGLObjects {
   private _mainProgram: Program;
   private _visualizeProgram: Program;
   private _framebufferObjects: [FramebufferObject, FramebufferObject];
-  private _indexBufferObject: IndexBufferObject;
+  private _mainVertexBufferObject: VertexBufferObject;
+  private _visualizeIndexBufferObject: IndexBufferObject;
   private _flipFramebuffers: boolean;
 
   public constructor(canvas: HTMLCanvasElement) {
@@ -122,39 +125,56 @@ export class WebGLObjects {
       initializeFramebuffer(gl, mainProgram),
       initializeFramebuffer(gl, mainProgram),
     ];
-    mainProgram.use({
-      gl,
-      callback: (webGLProgram: WebGLProgram) => {
-        setUniform({
-          gl,
-          program: webGLProgram,
-          dataType: "FLOAT32",
-          uniformName: "u_diffusivity",
-          data: [DIFFUSIVITY],
-        });
-        setUniform({
-          gl,
-          program: webGLProgram,
-          dataType: "FLOAT32",
-          uniformName: "u_time_step_size",
-          data: [computeTimeStepSize()],
-        });
-        setUniform({
-          gl,
-          program: webGLProgram,
-          dataType: "FLOAT32",
-          uniformName: "u_resolution",
-          data: [WIDTH, HEIGHT],
-        });
-        setUniform({
-          gl,
-          program: webGLProgram,
-          dataType: "FLOAT32",
-          uniformName: "u_grid_size",
-          data: [LX / WIDTH, LY / HEIGHT],
-        });
-      },
-    });
+    const mainVertexBufferObject: VertexBufferObject =
+      mainProgram.use<VertexBufferObject>({
+        gl,
+        callback: (webGLProgram: WebGLProgram) => {
+          setUniform({
+            gl,
+            program: webGLProgram,
+            dataType: "FLOAT32",
+            uniformName: "u_diffusivity",
+            data: [DIFFUSIVITY],
+          });
+          setUniform({
+            gl,
+            program: webGLProgram,
+            dataType: "FLOAT32",
+            uniformName: "u_time_step_size",
+            data: [computeTimeStepSize()],
+          });
+          setUniform({
+            gl,
+            program: webGLProgram,
+            dataType: "FLOAT32",
+            uniformName: "u_resolution",
+            data: [WIDTH, HEIGHT],
+          });
+          setUniform({
+            gl,
+            program: webGLProgram,
+            dataType: "FLOAT32",
+            uniformName: "u_grid_size",
+            data: [LX / WIDTH, LY / HEIGHT],
+          });
+          const vertexBufferObject: VertexBufferObject = (function () {
+            // should agree with the variable defined in the vertex shader
+            const numberOfVertices = 3;
+            const numberOfItemsForEachVertex = 2;
+            return setupStaticallyDrawnData({
+              gl,
+              program: webGLProgram,
+              attributeName: "a_position",
+              numberOfVertices,
+              numberOfItemsForEachVertex,
+              data: new Float32Array(
+                numberOfVertices * numberOfItemsForEachVertex,
+              ),
+            });
+          })();
+          return vertexBufferObject;
+        },
+      });
     (function () {
       const xFreq = 2;
       const yFreq = 2;
@@ -187,28 +207,30 @@ export class WebGLObjects {
       gl.bindTexture(TEXTURE_TARGET, null);
       gl.bindFramebuffer(FRAMEBUFFER_TARGET, null);
     })();
-    const { indexBufferObject }: { indexBufferObject: IndexBufferObject } =
-      visualizeProgram.use({
-        gl,
-        callback: (webGLProgram: WebGLProgram) => {
-          setupTextureCoordinates({
-            gl,
-            program: webGLProgram,
-            attributeName: "a_texture_coordinates",
-          });
-          return setupRectangleDomain({
-            gl,
-            program: webGLProgram,
-            attributeName: "a_position",
-            aspectRatio: WIDTH / HEIGHT,
-          });
-        },
-      });
+    const {
+      indexBufferObject: visualizeIndexBufferObject,
+    }: { indexBufferObject: IndexBufferObject } = visualizeProgram.use({
+      gl,
+      callback: (webGLProgram: WebGLProgram) => {
+        setupTextureCoordinates({
+          gl,
+          program: webGLProgram,
+          attributeName: "a_texture_coordinates",
+        });
+        return setupRectangleDomain({
+          gl,
+          program: webGLProgram,
+          attributeName: "a_position",
+          aspectRatio: WIDTH / HEIGHT,
+        });
+      },
+    });
     this._gl = gl;
     this._mainProgram = mainProgram;
     this._visualizeProgram = visualizeProgram;
     this._framebufferObjects = framebufferObjects;
-    this._indexBufferObject = indexBufferObject;
+    this._mainVertexBufferObject = mainVertexBufferObject;
+    this._visualizeIndexBufferObject = visualizeIndexBufferObject;
     this._flipFramebuffers = false;
   }
 
@@ -257,12 +279,17 @@ export class WebGLObjects {
         );
         gl.disable(gl.BLEND);
         gl.viewport(0, 0, WIDTH, HEIGHT);
-        gl.clearColor(0, 0, 1, 1);
+        gl.clearColor(0, 1, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
+        const vertexBufferObject: VertexBufferObject =
+          this._mainVertexBufferObject;
         gl.bindTexture(TEXTURE_TARGET, inputFramebufferObject.texture);
-        // use pre-defined triangle which is embedded in the vertex shader,
-        //   and thus we do not have to rely on vertex buffer objects
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        vertexBufferObject.bindAndExecute({
+          gl,
+          callback: (boundBuffer: VertexBufferObject) => {
+            boundBuffer.draw({ gl, mode: gl.TRIANGLES });
+          },
+        });
         gl.bindTexture(TEXTURE_TARGET, null);
         gl.enable(gl.BLEND);
         gl.bindFramebuffer(FRAMEBUFFER_TARGET, null);
@@ -286,7 +313,8 @@ export class WebGLObjects {
         gl.clearColor(0, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
         const texture: WebGLTexture = framebufferObject.texture;
-        const indexBufferObject: IndexBufferObject = this._indexBufferObject;
+        const indexBufferObject: IndexBufferObject =
+          this._visualizeIndexBufferObject;
         gl.bindTexture(TEXTURE_TARGET, texture);
         indexBufferObject.bindAndExecute({
           gl,
