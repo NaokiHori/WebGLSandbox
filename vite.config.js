@@ -42,6 +42,7 @@ export default defineConfig({
           "RepeatedTransformFeedback",
           "index.html",
         ),
+        vertexTextureFetch: resolve(root, "VertexTextureFetch", "index.html"),
       },
     },
   },

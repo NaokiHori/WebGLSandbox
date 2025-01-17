@@ -66,9 +66,10 @@ export class WebGLObjects {
         callback: (webGLProgram: WebGLProgram) => {
           return new Texture({
             gl,
-            target: gl.TEXTURE_2D,
             program: webGLProgram,
+            textureTarget: gl.TEXTURE_2D,
             textureUnit: 0,
+            textureName: "u_texture",
           });
         },
       });
@@ -80,7 +81,7 @@ export class WebGLObjects {
             texture.bindAndExecute({
               gl,
               callback: (boundTexture: Texture) => {
-                const textureTarget: TextureTarget = boundTexture.target;
+                const textureTarget: TextureTarget = boundTexture.textureTarget;
                 gl.texImage2D(
                   textureTarget,
                   0,

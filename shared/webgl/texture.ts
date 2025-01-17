@@ -21,32 +21,34 @@ function activateTexture(gl: WebGL2RenderingContext, textureUnit: TextureUnit) {
 }
 
 export class Texture {
-  private _target: TextureTarget;
-  private _texture: WebGLTexture;
+  private _textureTarget: TextureTarget;
+  private _webGLTexture: WebGLTexture;
   private _textureUnit: TextureUnit;
 
   public constructor({
     gl,
     program,
-    target,
+    textureTarget,
     textureUnit,
+    textureName,
   }: {
     gl: WebGL2RenderingContext;
     program: WebGLProgram;
-    target: TextureTarget;
+    textureTarget: TextureTarget;
     textureUnit: TextureUnit;
+    textureName: string;
   }) {
     activateTexture(gl, textureUnit);
     setUniform({
       gl,
       program,
       dataType: "INT32",
-      uniformName: "u_texture",
+      uniformName: textureName,
       data: [textureUnit],
     });
-    const texture: WebGLTexture = gl.createTexture();
-    this._target = target;
-    this._texture = texture;
+    const webGLTexture: WebGLTexture = gl.createTexture();
+    this._textureTarget = textureTarget;
+    this._webGLTexture = webGLTexture;
     this._textureUnit = textureUnit;
   }
 
@@ -57,16 +59,16 @@ export class Texture {
     gl: WebGL2RenderingContext;
     callback: (boundTexture: Texture) => void;
   }) {
-    const target: TextureTarget = this._target;
-    const texture: WebGLTexture = this._texture;
+    const textureTarget: TextureTarget = this._textureTarget;
+    const webGLTexture: WebGLTexture = this._webGLTexture;
     const textureUnit: TextureUnit = this._textureUnit;
     activateTexture(gl, textureUnit);
-    gl.bindTexture(target, texture);
+    gl.bindTexture(textureTarget, webGLTexture);
     callback(this);
-    gl.bindTexture(target, null);
+    gl.bindTexture(textureTarget, null);
   }
 
-  public get target(): TextureTarget {
-    return this._target;
+  public get textureTarget(): TextureTarget {
+    return this._textureTarget;
   }
 }

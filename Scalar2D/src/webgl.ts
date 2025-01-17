@@ -56,14 +56,15 @@ export class WebGLObjects {
         const scalarTexture = new Texture({
           gl,
           program: webGLProgram,
-          target: gl.TEXTURE_2D_ARRAY,
+          textureTarget: gl.TEXTURE_2D_ARRAY,
           textureUnit: 0,
+          textureName: "u_texture",
         });
         scalarTexture.bindAndExecute({
           gl,
           callback: (boundTexture: Texture) => {
             gl.texStorage3D(
-              boundTexture.target,
+              boundTexture.textureTarget,
               1,
               gl.R8,
               scalarGridPoints[0],
@@ -149,7 +150,7 @@ export class WebGLObjects {
         scalarTexture.bindAndExecute({
           gl,
           callback: (boundTexture: Texture) => {
-            const textureTarget: TextureTarget = boundTexture.target;
+            const textureTarget: TextureTarget = boundTexture.textureTarget;
             gl.generateMipmap(textureTarget);
             gl.texSubImage3D(
               textureTarget,
@@ -186,7 +187,7 @@ export class WebGLObjects {
         scalarTexture.bindAndExecute({
           gl,
           callback: (boundTexture: Texture) => {
-            const textureTarget: TextureTarget = boundTexture.target;
+            const textureTarget: TextureTarget = boundTexture.textureTarget;
             gl.texParameteri(
               textureTarget,
               gl.TEXTURE_MIN_FILTER,
