@@ -17,31 +17,8 @@ export default defineConfig({
         juliaSet: resolve(root, "JuliaSet", "index.html"),
         scalar2D: resolve(root, "Scalar2D", "index.html"),
         threeDimensional: resolve(root, "ThreeDimensional", "index.html"),
-        offScreenRenderingFundamental: resolve(
-          root,
-          "OffScreenRenderingFundamental",
-          "index.html",
-        ),
-        offScreenRenderingScalar: resolve(
-          root,
-          "OffScreenRenderingScalar",
-          "index.html",
-        ),
-        offScreenRenderingGPGPU: resolve(
-          root,
-          "OffScreenRenderingGPGPU",
-          "index.html",
-        ),
-        simpleTransformFeedback: resolve(
-          root,
-          "SimpleTransformFeedback",
-          "index.html",
-        ),
-        repeatedTransformFeedback: resolve(
-          root,
-          "RepeatedTransformFeedback",
-          "index.html",
-        ),
+        offScreenRendering: resolve(root, "OffScreenRendering", "index.html"),
+        transformFeedback: resolve(root, "TransformFeedback", "index.html"),
         vertexTextureFetch: resolve(root, "VertexTextureFetch", "index.html"),
       },
     },
