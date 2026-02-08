@@ -27,26 +27,23 @@ jobs:
           set -x
           set -e
           mkdir ${{ env.ASSETS }}
-      - name: Setup node
-        uses: actions/setup-node@main
-      - name: Install dependencies
-        run: |
-          npm install
+      - name: Build Docker image
+        run: docker compose build
       - name: Run type-check
         run: |
-          set -x
-          set -e
-          npx tsc
+          docker compose run --rm app npx tsc
       - name: Perform unit tests
         run: |
-          set -x
-          set -e
-          npx vitest run
+          docker compose run --rm app npx vitest run
+      - name: Check code format
+        run: |
+          docker compose run --rm app npx prettier . --check
+      - name: Run linter
+        run: |
+          docker compose run --rm app npx eslint .
       - name: Build web application
         run: |
-          set -x
-          set -e
-          npx \
+          docker compose run --rm app npx \
             vite build \
             --outDir=${{ env.ASSETS }} \
             --base=https://naokihori.github.io/WebGLSandbox/

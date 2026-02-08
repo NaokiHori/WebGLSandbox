@@ -1,0 +1,11 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: container_webgl_sandbox
+    image: webgl_sandbox
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/project/src
