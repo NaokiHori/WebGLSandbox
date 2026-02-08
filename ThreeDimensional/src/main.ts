@@ -77,7 +77,6 @@ window.addEventListener("load", () => {
     const minScale = 2e-1;
     const maxScale = 5e1;
     window.addEventListener("wheel", (event: WheelEvent) => {
-      event.preventDefault();
       scale = Math.max(
         minScale,
         Math.min(maxScale, scale - event.deltaY * 0.005),

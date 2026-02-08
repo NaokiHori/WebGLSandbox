@@ -76,7 +76,7 @@ function handleCanvasPointerEvents(
 ) {
   event.preventDefault();
   const isBottomHalf = event.clientY / canvas.height < 0.5;
-  cameraPositionZ.update(cameraPositionZ.get() + (isBottomHalf ? -0.1 : +0.1));
+  cameraPositionZ.update(cameraPositionZ.get() + (isBottomHalf ? -0.1 : 0.1));
   webGLObjects.updateCameraPositionZ(cameraPositionZ.get());
 }
 

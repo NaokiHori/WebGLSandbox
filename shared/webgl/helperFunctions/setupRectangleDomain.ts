@@ -19,9 +19,9 @@ export function setupRectangleDomain({
 } {
   const positions = [
     [-aspectRatio, -1],
-    [+aspectRatio, -1],
-    [-aspectRatio, +1],
-    [+aspectRatio, +1],
+    [aspectRatio, -1],
+    [-aspectRatio, 1],
+    [aspectRatio, 1],
   ];
   const indices = [0, 1, 2, 1, 3, 2];
   const vbo: VertexBufferObject = setupStaticallyDrawnData({
